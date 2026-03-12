@@ -1,12 +1,10 @@
 {
   "kind": "quiz",
   "id": "m20",
-  "title": "Alekhine's Gun",
-  "fen": "r5k1/5pp1/2p5/p6p/Pp6/1P3PP1/2R3KP/2R5 w - - 0 32",
-  "solution": [
-    "c2c7"
-  ],
+  "title": "Rook on 7th",
+  "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 4 4",
+  "solution": ["Bxf7"],
   "theme": "back-rank",
   "difficulty": "medium",
-  "description": "White to move — the rooks dominate the 7th rank."
+  "description": "White to move — rook dominates the 7th rank!"
 }

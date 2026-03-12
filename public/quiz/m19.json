@@ -1,12 +1,10 @@
 {
   "kind": "quiz",
   "id": "m19",
-  "title": "Clearance Sacrifice",
-  "fen": "r3r1k1/ppqb1pbp/2np1np1/2p1p3/4P3/1PN2NPP/PBPQ1PB1/R4RK1 b - - 0 12",
-  "solution": [
-    "d6e4"
-  ],
+  "title": "Discovered Check",
+  "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 4 4",
+  "solution": ["Bxf7"],
   "theme": "discovered",
   "difficulty": "medium",
-  "description": "Black to move — sacrifice to clear a line."
+  "description": "White to move — discovered check wins material!"
 }

@@ -2,16 +2,11 @@
   "kind": "quiz",
   "id": "h02",
   "title": "Légall's Trap",
-  "fen": "r1bqkb1r/pppp1ppp/2n5/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R b KQkq - 3 4",
-  "solution": [
-    "g8f6",
-    "f3e5",
-    "c6e5",
-    "d1h5",
-    "f8e7",
-    "h5f7"
-  ],
+  "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 4 4",
+  "solution": ["Bxf7", "Kxf7", "Ng5"],
   "theme": "fork",
   "difficulty": "hard",
-  "description": "Both sides to play — White has a famous trap prepared. Play it out!"
+  "description": "White to move — find the famous trap sequence!",
+  "moveCount": 3,
+  "turn": "white"
 }

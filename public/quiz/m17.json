@@ -1,12 +1,10 @@
 {
   "kind": "quiz",
   "id": "m17",
-  "title": "Rook Skewer",
-  "fen": "4k3/4r3/4R3/4K3/8/8/8/8 w - - 0 1",
-  "solution": [
-    "e6e8"
-  ],
-  "theme": "skewer",
+  "title": "Double Attack",
+  "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 4 4",
+  "solution": ["Bxf7"],
+  "theme": "fork",
   "difficulty": "medium",
-  "description": "White to move — force the king to reveal the rook behind it."
+  "description": "White to move — win material with double attack!"
 }

@@ -1,14 +1,12 @@
 {
   "kind": "quiz",
   "id": "h07",
-  "title": "Rook Sacrifice to Open File",
-  "fen": "2r1r1k1/pp3ppp/2n5/3pPB2/3p4/2NB4/PP3PPP/R3R1K1 w - - 0 17",
-  "solution": [
-    "f5h7",
-    "g8h7",
-    "e1h1"
-  ],
+  "title": "Rook Sacrifice",
+  "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 0 7",
+  "solution": ["Bxf7"],
   "theme": "deflection",
   "difficulty": "hard",
-  "description": "White to move — sacrifice to expose the king on the h-file."
+  "description": "White to move — sacrifice for attack!",
+  "moveCount": 1,
+  "turn": "white"
 }

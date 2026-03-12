@@ -1,12 +1,10 @@
 {
   "kind": "quiz",
   "id": "e13",
-  "title": "Skewer the King",
-  "fen": "4k3/4r3/8/8/8/8/4B3/4K3 w - - 0 1",
-  "solution": [
-    "e2b5"
-  ],
-  "theme": "skewer",
+  "title": "Bishop Pin",
+  "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 5",
+  "solution": ["Bxf7"],
+  "theme": "pin",
   "difficulty": "easy",
-  "description": "White to move — skewer the king to win the rook."
+  "description": "White to move — win a piece with the bishop pin!"
 }

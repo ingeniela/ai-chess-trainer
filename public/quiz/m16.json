@@ -1,12 +1,10 @@
 {
   "kind": "quiz",
   "id": "m16",
-  "title": "Discovered Check Wins",
-  "fen": "r1bq1rk1/ppp1ppbp/2np1np1/8/3PP3/2N1BP2/PPP1N1PP/R2QKB1R b KQ - 0 8",
-  "solution": [
-    "d6e4"
-  ],
+  "title": "Discovered Attack",
+  "fen": "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 4 4",
+  "solution": ["Bxf7"],
   "theme": "discovered",
   "difficulty": "medium",
-  "description": "Black to move — uncover an attack on the queen."
+  "description": "White to move — discovered attack wins material!"
 }

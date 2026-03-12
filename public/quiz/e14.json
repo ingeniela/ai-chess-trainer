@@ -1,12 +1,10 @@
 {
   "kind": "quiz",
   "id": "e14",
-  "title": "Absolute Pin",
-  "fen": "r1bqk2r/pppp1ppp/2n5/4p3/1bB1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 5",
-  "solution": [
-    "c1d2"
-  ],
-  "theme": "pin",
+  "title": "Skewer Win",
+  "fen": "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 5",
+  "solution": ["Bxf7"],
+  "theme": "skewer",
   "difficulty": "easy",
-  "description": "White to move — break the pin and regain material."
+  "description": "White to move — win a piece with the bishop!"
 }
