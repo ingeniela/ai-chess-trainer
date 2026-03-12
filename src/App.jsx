@@ -61,6 +61,11 @@ const App = () => {
   useEffect(() => {
     playerColorReference.current = playerColor;
   }, [playerColor]);
+  const opponentReference = useRef(opponent);
+  useEffect(() => {
+    opponentReference.current = opponent;
+  }, [opponent]);
+  const triggerAIMoveReference = useRef(null);
   const [isAIThinking, setIsAIThinking] = useState(false);
 
   // ── Dark mode ────────────────────────────────────────────────────────────
@@ -99,7 +104,7 @@ const App = () => {
   // When learning mode is on and a training scenario is loaded, override the
   // board with the training position.
   const displayBoardGame = useMemo(() => {
-    if (isLiveMode && trainingBoard.isTrainingActive && trainingBoard.fen) {
+    if (trainingBoard.isTrainingActive && trainingBoard.fen) {
       const g = new Chess();
       try {
         g.load(trainingBoard.fen);
@@ -110,24 +115,23 @@ const App = () => {
     }
     return displayGame;
   }, [
-    isLiveMode,
     trainingBoard.isTrainingActive,
     trainingBoard.fen,
     displayGame,
   ]);
 
   const displayBoardOrientation =
-    isLiveMode && trainingBoard.isTrainingActive
+    trainingBoard.isTrainingActive
       ? trainingBoard.orientation
       : boardOrientation;
 
   const displayBoardArrows =
-    isLiveMode && trainingBoard.isTrainingActive
+    trainingBoard.isTrainingActive
       ? trainingBoard.arrows
       : bestMoveArrows;
 
   const displayBoardLastMove =
-    isLiveMode && trainingBoard.isTrainingActive
+    trainingBoard.isTrainingActive
       ? null
       : displayLastMoveSquares;
 
@@ -231,17 +235,32 @@ const App = () => {
     try {
       const move = gameReference.current.move(san);
       if (move) {
-        setFen(gameReference.current.fen());
+        const newFen = gameReference.current.fen();
+        setFen(newFen);
         setMoveHistory((previous) => [
           ...previous,
           {
             san: move.san,
-            fen: gameReference.current.fen(),
+            fen: newFen,
             from: move.from,
             to: move.to,
           },
         ]);
         setLastMoveSquares({ from: move.from, to: move.to });
+        // Trigger opponent to respond
+        if (
+          opponentReference.current !== "manual" &&
+          !gameReference.current.isGameOver() &&
+          triggerAIMoveReference.current
+        ) {
+          const historyForEngine = gameReference.current
+            .history({ verbose: true })
+            .map((m) => ({ san: m.san, fen: m.after, from: m.from, to: m.to }));
+          setTimeout(
+            () => triggerAIMoveReference.current(newFen, historyForEngine),
+            150,
+          );
+        }
       }
     } catch {
       // ignore invalid move from AI
@@ -533,6 +552,11 @@ const App = () => {
     ],
   );
 
+  // Keep triggerAIMoveReference in sync so handleAIMakeMove can call it
+  useEffect(() => {
+    triggerAIMoveReference.current = triggerAIMove;
+  }, [triggerAIMove]);
+
   // ── Player color change ──────────────────────────────────────────────────
   const handlePlayerColorChange = useCallback(
     (color) => {
@@ -593,9 +617,9 @@ const App = () => {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleNavigateBack, handleNavigateForward, handleExitReview]);
 
-  // ── Reset training state when Learning mode is toggled off ───────────────
+  // ── Reset training state when switching TO live mode ────────────────────
   useEffect(() => {
-    if (!isLiveMode) {
+    if (isLiveMode) {
       trainingHandlerReference.current = null;
       setTrainingBoard({
         fen: null,
@@ -623,8 +647,8 @@ const App = () => {
   // ── Make a board move ────────────────────────────────────────────────────
   const handleMove = useCallback(
     (sourceSquare, targetSquare, piece) => {
-      // ── Route to training handler when Learning mode + training active ──
-      if (isLiveMode && trainingHandlerReference.current) {
+      // ── Route to training handler when training is active ──
+      if (trainingHandlerReference.current) {
         trainingHandlerReference.current(sourceSquare, targetSquare);
         return null;
       }
@@ -974,12 +998,11 @@ const App = () => {
             onMove={handleMove}
             lastMoveSquares={displayBoardLastMove}
             isAIThinking={
-              isAIThinking && !(isLiveMode && trainingBoard.isTrainingActive)
+              isAIThinking && !trainingBoard.isTrainingActive
             }
             boardOrientation={displayBoardOrientation}
             isReviewMode={
-              viewIndex !== null &&
-              !(isLiveMode && trainingBoard.isTrainingActive)
+              viewIndex !== null && !trainingBoard.isTrainingActive
             }
             arrows={displayBoardArrows}
             premove={premove}

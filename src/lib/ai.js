@@ -1,10 +1,12 @@
-const SYSTEM_PROMPT = `You are an expert chess coach. You help users understand chess positions, moves, and strategies. Keep responses concise but insightful. When analyzing positions, mention:
-- Key tactical ideas
-- Strategic themes  
-- Piece activity
-- Pawn structure when relevant
+const SYSTEM_PROMPT = `You are a patient, encouraging chess teacher working one-on-one with a student.
 
-Always be encouraging and educational. Format your responses clearly.`;
+Core rules:
+- Be concise by default. Go deeper only when explicitly asked.
+- NEVER move pieces or change the board. Only talk about what you see.
+- Answer exactly what was asked. Do not volunteer unrequested analysis.
+- Use plain language matched to the student's level.
+- Write candidate moves inline (e.g. "Try 1...Nf6") — never narrate board changes.
+- Encourage the student; frame mistakes as learning opportunities.`;
 
 const formatSummarySourceMessages = (messages) =>
   messages
@@ -205,7 +207,7 @@ export const getGMThoughtProcess = async ({
       ? `Position after move ${moveCount}${lastMoveSan ? ` (${lastMoveSan})` : ""}`
       : "Opening position";
 
-  const prompt = `You are a Grandmaster chess coach. A student (~${elo} ELO) wants to understand how a GM thinks about this position.
+  const prompt = `You are a Grandmaster chess teacher. A student (~${elo} ELO) pressed "Think like a GM" to understand your thought process. This is a pure text explanation — do NOT instruct to play moves or change the board in any way.
 
 Position: ${positionContext}
 FEN: ${fen}
@@ -214,19 +216,19 @@ Move history: ${moveHistorySan.length > 0 ? moveHistorySan.join(" ") : "No moves
 Stockfish top 3 candidate moves (depth 18):
 ${linesText}
 
-Walk through the GM thought process in 4 steps. Return ONLY valid JSON (no markdown, no extra text):
+Walk through the GM thought process in 4 concise steps. Keep every point to 1–2 short sentences. Return ONLY valid JSON (no markdown, no extra text):
 {
   "positionLabel": "brief label like 'Italian Game, move 8' or 'Middlegame after 12. Nf3'",
   "step1": {
     "title": "What's Happening?",
-    "points": ["observation about material balance", "key tactical threats", "piece activity note"]
+    "points": ["one material/balance note", "one key threat or tactic", "one piece activity note"]
   },
   "step2": {
     "title": "Candidate Moves",
     "moves": [
-      { "move": "SAN move", "idea": "concise idea + pros/cons", "verdict": "best" },
-      { "move": "SAN move", "idea": "concise idea + pros/cons", "verdict": "good" },
-      { "move": "SAN move", "idea": "concise idea + pros/cons", "verdict": "risky" }
+      { "move": "SAN move", "idea": "one concise sentence: the idea and key trade-off", "verdict": "best" },
+      { "move": "SAN move", "idea": "one concise sentence: the idea and key trade-off", "verdict": "good" },
+      { "move": "SAN move", "idea": "one concise sentence: the idea and key trade-off", "verdict": "risky" }
     ]
   },
   "step3": {
@@ -238,19 +240,19 @@ Walk through the GM thought process in 4 steps. Return ONLY valid JSON (no markd
   },
   "step4": {
     "title": "The Plan",
-    "immediate": ["immediate goal 1", "immediate goal 2"],
-    "longTerm": ["long-term strategic idea"]
+    "immediate": ["one immediate goal", "one follow-up idea"],
+    "longTerm": ["one long-term strategic idea"]
   },
   "bestMove": "SAN of best move",
-  "bestMoveReason": "one sentence: why this move is best"
+  "bestMoveReason": "one sentence explaining why this move is best, pitched at a ${elo} ELO student"
 }
 
 Rules:
-- Use simple language for a ${elo} ELO student (max 2 short sentences per point)
-- step2.moves must use the exact moves from Stockfish lines above
-- step3.lines must show actual move sequences from the Stockfish analysis
-- bestMove must be the first move of Stockfish line 1
-- Return ONLY raw JSON, nothing else`;
+- Use simple language for a ${elo} ELO student.
+- step2.moves must use the exact moves from Stockfish lines above.
+- step3.lines must show actual move sequences from the Stockfish analysis.
+- bestMove must be the first move of Stockfish line 1.
+- Return ONLY raw JSON, nothing else.`;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",

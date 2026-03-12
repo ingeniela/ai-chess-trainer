@@ -128,6 +128,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
   const [puzzleIndex, setPuzzleIndex] = useState(0);
 
   const chessReference = useRef(null);
+  const puzzleOrientationRef = useRef("white");
   const [fen, setFen] = useState("");
   const [solutionStep, setSolutionStep] = useState(0);
   const [status, setStatus] = useState("idle"); // idle | correct-step | wrong | solved | revealed
@@ -150,6 +151,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
       if (!p) return;
       const g = new Chess(p.fen);
       chessReference.current = g;
+      puzzleOrientationRef.current = g.turn() === "w" ? "white" : "black";
       setSolutionStep(0);
       setStatus("idle");
       setFeedback({ type: "info", text: p.description || guide.intro });
@@ -157,7 +159,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
       setWrongCount(0);
       onBoardUpdate({
         fen: g.fen(),
-        orientation: g.turn() === "w" ? "white" : "black",
+        orientation: puzzleOrientationRef.current,
         arrows: [],
         isTrainingActive: true,
       });
@@ -193,7 +195,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
             });
             onBoardUpdate({
               fen: newFen,
-              orientation: game.turn() === "w" ? "white" : "black",
+              orientation: puzzleOrientationRef.current,
               arrows: [],
               isTrainingActive: true,
             });
@@ -205,7 +207,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
             });
             onBoardUpdate({
               fen: newFen,
-              orientation: game.turn() === "w" ? "white" : "black",
+              orientation: puzzleOrientationRef.current,
               arrows: [],
               isTrainingActive: true,
             });
@@ -254,7 +256,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
             });
             onBoardUpdate({
               fen: newFen,
-              orientation: game.turn() === "w" ? "white" : "black",
+              orientation: puzzleOrientationRef.current,
               arrows: [],
               isTrainingActive: true,
             });
@@ -330,7 +332,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
     });
     onBoardUpdate({
       fen: chessReference.current.fen(),
-      orientation: chessReference.current.turn() === "w" ? "white" : "black",
+      orientation: puzzleOrientationRef.current,
       arrows: hintArrow,
       isTrainingActive: true,
     });
@@ -358,7 +360,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
     });
     onBoardUpdate({
       fen: game.fen(),
-      orientation: game.turn() === "w" ? "white" : "black",
+      orientation: puzzleOrientationRef.current,
       arrows,
       isTrainingActive: true,
     });
@@ -397,7 +399,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
   // ── LIST PHASE ────────────────────────────────────────────────────────────
   if (phase === "list") {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full animate-in fade-in duration-150">
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0">
           <button
             onClick={onBack}
@@ -472,7 +474,7 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
   const playerSteps = Math.ceil(totalSteps / 2);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-2 duration-200">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0">
         <button
@@ -886,7 +888,7 @@ const OpeningTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
   // ── SIDE SELECTION ────────────────────────────────────────────────────────
   if (phase === "side") {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-2 duration-200">
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0">
           <button
             onClick={() => setPhase("list")}
@@ -937,7 +939,7 @@ const OpeningTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
   // ── LIST ──────────────────────────────────────────────────────────────────
   if (phase === "list") {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full animate-in fade-in duration-150">
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0">
           <button
             onClick={onBack}
@@ -1026,7 +1028,7 @@ const OpeningTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
   const progressMoves = moveList.slice(0, drillIndex);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-2 duration-200">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0">
         <button
@@ -1315,7 +1317,7 @@ const EndgameTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
   // ── LIST ──────────────────────────────────────────────────────────────────
   if (phase === "list") {
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full animate-in fade-in duration-150">
         <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0">
           <button
             onClick={onBack}
@@ -1383,7 +1385,7 @@ const EndgameTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
 
   // ── TRAINING PHASE ────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full animate-in fade-in slide-in-from-right-2 duration-200">
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0">
         <button
@@ -1629,7 +1631,7 @@ export default function TrainingPanel({
   // ── Module selector ────────────────────────────────────────────────────────
   if (!activeModule) {
     return (
-      <div className="flex flex-col h-full border-l border-border bg-card">
+      <div className="flex flex-col h-full border-l border-border bg-card animate-in fade-in slide-in-from-left-2 duration-200">
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border shrink-0">
           <Dumbbell className="h-4 w-4 text-primary" />
@@ -1706,7 +1708,7 @@ export default function TrainingPanel({
   };
 
   return (
-    <div className="flex flex-col h-full border-l border-border bg-card">
+    <div className="flex flex-col h-full border-l border-border bg-card animate-in fade-in slide-in-from-right-2 duration-200">
       {activeModule === "puzzle" && <PuzzleTrainer {...sharedProperties} />}
       {activeModule === "opening" && <OpeningTrainer {...sharedProperties} />}
       {activeModule === "endgame" && <EndgameTrainer {...sharedProperties} />}

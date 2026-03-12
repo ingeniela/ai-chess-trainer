@@ -106,9 +106,9 @@ const OPPONENT_OPTIONS = [
 ];
 
 const DIFFICULTY_OPTIONS = [
-  { value: "easy", label: "Easy", desc: "random" },
-  { value: "medium", label: "Medium", desc: "depth 2" },
-  { value: "hard", label: "Hard", desc: "depth 3" },
+  { value: "easy", label: "Easy", desc: "~800 ELO" },
+  { value: "medium", label: "Medium", desc: "~1200 ELO" },
+  { value: "hard", label: "Hard", desc: "~1800 ELO" },
 ];
 
 // ── ControlBar ─────────────────────────────────────────────────────────────

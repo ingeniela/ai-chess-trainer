@@ -214,8 +214,8 @@ export default function OpeningDrillMode({ onClose }) {
   // ── Phase: Opening Selection ──────────────────────────────────────────────
   if (phase === "select") {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
-        <div className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+        <div className="bg-card border border-border rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-border">
             <div>
@@ -340,7 +340,7 @@ export default function OpeningDrillMode({ onClose }) {
   const cat = CATEGORY_STYLE[selectedOpening?.category] ?? CATEGORY_STYLE.open;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-card border border-border rounded-2xl shadow-2xl flex flex-col md:flex-row gap-0 w-full max-w-[900px] overflow-hidden max-h-[95vh]">
         {/* ── Left: Board ──────────────────────────────────────────────────── */}
         <div className="shrink-0 w-full md:w-[420px] flex items-center justify-center p-4 bg-black/20">
