@@ -412,14 +412,14 @@ export const buildMyMoveCard = (
     suggestion = {
       bestMove: bestSan,
       line: bestPvSan.slice(1), // continuation after best move
-      eloContext: `This is the move ${targetEloLabel(userElo)} would find.`,
+      eloContext: `This was the alternative ${targetEloLabel(userElo)} would have played in that position.`,
     };
   } else if (!playedIsBest && bestSan && quality.label === "Good") {
     // For "Good" moves, show best as bonus info
     suggestion = {
       bestMove: bestSan,
       line: bestPvSan.slice(1),
-      eloContext: `Alternative: what ${targetEloLabel(userElo)} would consider.`,
+      eloContext: `Alternative from that position: what ${targetEloLabel(userElo)} would consider.`,
     };
   }
 

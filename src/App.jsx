@@ -45,6 +45,34 @@ const getStoredBoardColors = () => ({
   dark: localStorage.getItem("chess-board-dark") || "#779952",
 });
 
+const normalizeCastlingTarget = (game, sourceSquare, targetSquare) => {
+  if (!sourceSquare || !targetSquare) return targetSquare;
+
+  const king = game.get(sourceSquare);
+  const rook = game.get(targetSquare);
+  if (
+    !king ||
+    !rook ||
+    king.type !== "k" ||
+    rook.type !== "r" ||
+    king.color !== rook.color ||
+    sourceSquare[1] !== targetSquare[1]
+  ) {
+    return targetSquare;
+  }
+
+  const destinationFile =
+    targetSquare[0] === "h" ? "g" : targetSquare[0] === "a" ? "c" : null;
+  if (!destinationFile) return targetSquare;
+
+  const destination = `${destinationFile}${sourceSquare[1]}`;
+  const canCastle = game
+    .moves({ square: sourceSquare, verbose: true })
+    .some((move) => move.to === destination);
+
+  return canCastle ? destination : targetSquare;
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 const App = () => {
   const gameReference = useRef(new Chess());
@@ -68,6 +96,7 @@ const App = () => {
   const [boardColors, setBoardColors] = useState(getStoredBoardColors);
   const [activeMode, setActiveMode] = useState("play");
   const [modeRailCollapsed, setModeRailCollapsed] = useState(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang =
@@ -726,6 +755,11 @@ const App = () => {
 
       const game = gameReference.current;
       const preFen = game.fen();
+      const actualTargetSquare = normalizeCastlingTarget(
+        game,
+        sourceSquare,
+        targetSquare,
+      );
 
       if (viewIndexReference.current !== null) return false;
 
@@ -743,11 +777,16 @@ const App = () => {
           if (piece) {
             const isPawn = piece[1] === "P" || piece[1] === "p";
             const isLastRank =
-              (piece[0] === "w" && targetSquare[1] === "8") ||
-              (piece[0] === "b" && targetSquare[1] === "1");
+              (piece[0] === "w" && actualTargetSquare[1] === "8") ||
+              (piece[0] === "b" && actualTargetSquare[1] === "1");
             if (isPawn && isLastRank) promotion = "q";
           }
-          const pm = { from: sourceSquare, to: targetSquare, promotion, piece };
+          const pm = {
+            from: sourceSquare,
+            to: actualTargetSquare,
+            promotion,
+            piece,
+          };
           setPremove(pm);
           premoveReference.current = pm;
         }
@@ -759,22 +798,26 @@ const App = () => {
       if (piece) {
         const isPawn = piece[1] === "P" || piece[1] === "p";
         const isLastRank =
-          (piece[0] === "w" && targetSquare[1] === "8") ||
-          (piece[0] === "b" && targetSquare[1] === "1");
+          (piece[0] === "w" && actualTargetSquare[1] === "8") ||
+          (piece[0] === "b" && actualTargetSquare[1] === "1");
         if (isPawn && isLastRank) promotion = "q";
       } else {
         const p = game.get(sourceSquare);
         if (p?.type === "p") {
           const isLastRank =
-            (p.color === "w" && targetSquare[1] === "8") ||
-            (p.color === "b" && targetSquare[1] === "1");
+            (p.color === "w" && actualTargetSquare[1] === "8") ||
+            (p.color === "b" && actualTargetSquare[1] === "1");
           if (isLastRank) promotion = "q";
         }
       }
 
       let move = null;
       try {
-        move = game.move({ from: sourceSquare, to: targetSquare, promotion });
+        move = game.move({
+          from: sourceSquare,
+          to: actualTargetSquare,
+          promotion,
+        });
       } catch {
         return false;
       }
@@ -786,7 +829,7 @@ const App = () => {
         { san: move.san, fen: game.fen(), from: move.from, to: move.to },
       ]);
       setMoveQuality(null);
-      setLastMoveSquares({ from: sourceSquare, to: targetSquare });
+      setLastMoveSquares({ from: sourceSquare, to: actualTargetSquare });
       setBestMoveArrows([]);
       setPreviewArrows([]);
       clockReference.current.addIncrement(move.color);
@@ -1086,8 +1129,8 @@ const App = () => {
         className="grid flex-1 grid-cols-1 grid-rows-[auto_auto_620px] overflow-y-auto lg:grid-cols-[var(--app-grid-columns)] lg:grid-rows-none lg:overflow-hidden"
         style={{
           "--app-grid-columns": modeRailCollapsed
-            ? "56px minmax(0,1fr) 440px"
-            : "168px minmax(0,1fr) 440px",
+            ? `56px minmax(0,1fr) ${rightSidebarCollapsed ? "48px" : "440px"}`
+            : `168px minmax(0,1fr) ${rightSidebarCollapsed ? "48px" : "440px"}`,
         }}
       >
         <ModeRail
@@ -1123,41 +1166,62 @@ const App = () => {
           />
         </div>
 
-        <div className="min-h-0 min-w-0 border-t border-border bg-card lg:border-l lg:border-t-0">
-          {activeMode === "training" ? (
-            <TrainingPanel
-              onBoardUpdate={handleTrainingBoardUpdate}
-              onRegisterMoveHandler={handleRegisterMoveHandler}
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              onAskAI={handleAskAI}
-              onLearnWithAI={handleLearnWithAI}
-              tokenStats={tokenStats}
-              setMessages={setMessages}
-            />
+        <div className="relative min-h-0 min-w-0 border-t border-border bg-card lg:border-l lg:border-t-0">
+          {rightSidebarCollapsed ? (
+            <div className="flex h-full items-start justify-center pt-3">
+              <button
+                onClick={() => setRightSidebarCollapsed(false)}
+                className="rounded-md border border-border bg-secondary px-2 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                title="Open right sidebar"
+              >
+                ‹
+              </button>
+            </div>
           ) : (
-            <ChatPanel
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              coachMode={coachMode}
-              onCoachModeChange={setCoachMode}
-              isLiveMode={isLiveMode}
-              onEngineAnalyze={handleEngineAnalyze}
-              onEngineBestMove={handleEngineBestMove}
-              onEngineHint={handleEngineHint}
-              onThinkLikeGM={() => {
-                setCoachMode("ai");
-                handleThinkLikeGM(moveHistory.map((m) => m.san));
-              }}
-              onAskAI={handleAskAI}
-              onLearnWithAI={handleLearnWithAI}
-              tokenStats={tokenStats}
-              historyPanel={moveHistoryPanel}
-              onPreviewLine={handlePreviewLine}
-              onClearPreview={handleClearPreviewLine}
-            />
+            <>
+              <button
+                onClick={() => setRightSidebarCollapsed(true)}
+                className="absolute right-2 top-2 z-20 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                title="Close right sidebar"
+              >
+                ›
+              </button>
+              {activeMode === "training" ? (
+                <TrainingPanel
+                  onBoardUpdate={handleTrainingBoardUpdate}
+                  onRegisterMoveHandler={handleRegisterMoveHandler}
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  onAskAI={handleAskAI}
+                  onLearnWithAI={handleLearnWithAI}
+                  tokenStats={tokenStats}
+                  setMessages={setMessages}
+                />
+              ) : (
+                <ChatPanel
+                  messages={messages}
+                  onSendMessage={handleSendMessage}
+                  isLoading={isLoading}
+                  coachMode={coachMode}
+                  onCoachModeChange={setCoachMode}
+                  isLiveMode={isLiveMode}
+                  onEngineAnalyze={handleEngineAnalyze}
+                  onEngineBestMove={handleEngineBestMove}
+                  onEngineHint={handleEngineHint}
+                  onThinkLikeGM={() => {
+                    setCoachMode("ai");
+                    handleThinkLikeGM(moveHistory.map((m) => m.san));
+                  }}
+                  onAskAI={handleAskAI}
+                  onLearnWithAI={handleLearnWithAI}
+                  tokenStats={tokenStats}
+                  historyPanel={moveHistoryPanel}
+                  onPreviewLine={handlePreviewLine}
+                  onClearPreview={handleClearPreviewLine}
+                />
+              )}
+            </>
           )}
         </div>
       </div>

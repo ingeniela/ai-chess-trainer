@@ -221,6 +221,35 @@ const BoardPanel = ({
   const isGameOver = game.isGameOver();
   const turn = game.turn(); // 'w' or 'b'
 
+  const getCastlingRookTarget = useCallback(
+    (kingSquare, rookSquare) => {
+      const king = game.get(kingSquare);
+      const rook = game.get(rookSquare);
+      if (
+        !king ||
+        !rook ||
+        king.type !== "k" ||
+        rook.type !== "r" ||
+        king.color !== rook.color ||
+        kingSquare[1] !== rookSquare[1]
+      ) {
+        return null;
+      }
+
+      const destinationFile =
+        rookSquare[0] === "h" ? "g" : rookSquare[0] === "a" ? "c" : null;
+      if (!destinationFile) return null;
+
+      const destination = `${destinationFile}${kingSquare[1]}`;
+      const canCastle = game
+        .moves({ square: kingSquare, verbose: true })
+        .some((move) => move.to === destination);
+
+      return canCastle ? destination : null;
+    },
+    [game],
+  );
+
   // ── Game status message ──
   const gameStatus = useMemo(() => {
     if (isCheckmate) {
@@ -286,11 +315,23 @@ const BoardPanel = ({
           borderRadius: "50%",
         };
       });
+      if (piece.type === "k") {
+        for (const rookSquare of [`a${square[1]}`, `h${square[1]}`]) {
+          if (getCastlingRookTarget(square, rookSquare)) {
+            newSquares[rookSquare] = {
+              background:
+                "radial-gradient(circle, rgba(34,197,94,.45) 45%, transparent 47%)",
+              borderRadius: "50%",
+              boxShadow: "inset 0 0 0 2px rgba(34,197,94,.5)",
+            };
+          }
+        }
+      }
       setOptionSquares(newSquares);
       setSelectedSquare(square);
       return true;
     },
-    [game, isReviewMode, turn],
+    [game, getCastlingRookTarget, isReviewMode, turn],
   );
 
   // ── Handle square click (click-to-move) ──
@@ -324,6 +365,15 @@ const BoardPanel = ({
 
       // Clicking own piece → reselect it
       const piece = game.get(square);
+      if (piece && getCastlingRookTarget(selectedSquare, square)) {
+        const result = onMove(selectedSquare, square);
+        if (result) {
+          setSelectedSquare(null);
+          setOptionSquares({});
+          return;
+        }
+      }
+
       if (piece && piece.color === turn) {
         const hasMoves = getMoveOptions(square);
         if (!hasMoves) setInvalidSquare(square); // fully pinned piece

@@ -47,6 +47,34 @@ const TEACHER_MESSAGE = {
     "Study the highlighted solution. Focus on why the first move forces the rest.",
 };
 
+const UCI_PATTERN = /^[a-h][1-8][a-h][1-8][qrbn]?$/i;
+
+const normalizeSanCase = (move) => {
+  const trimmed = String(move ?? "").trim();
+  if (trimmed.toLowerCase().startsWith("o-o")) {
+    return trimmed.toUpperCase();
+  }
+
+  return trimmed
+    .replace(/^[kqrbn]/, (piece) => piece.toUpperCase())
+    .replace(/=([qrbn])/i, (_, piece) => `=${piece.toUpperCase()}`);
+};
+
+const playSolutionMove = (game, rawMove) => {
+  const moveText = String(rawMove ?? "").trim();
+  if (!moveText) return null;
+
+  if (UCI_PATTERN.test(moveText)) {
+    return game.move({
+      from: moveText.slice(0, 2).toLowerCase(),
+      to: moveText.slice(2, 4).toLowerCase(),
+      promotion: moveText[4]?.toLowerCase() || "q",
+    });
+  }
+
+  return game.move(normalizeSanCase(moveText));
+};
+
 const LoadingOverlay = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#242421] text-white">
     Loading challenges...
@@ -198,11 +226,7 @@ export default function PuzzleMode({ onClose, initialDifficulty = null }) {
       const uci = solution[step];
       engineTimeoutReference.current = setTimeout(() => {
         try {
-          const move = game.move({
-            from: uci.slice(0, 2),
-            to: uci.slice(2, 4),
-            promotion: uci[4] || "q",
-          });
+          const move = playSolutionMove(game, uci);
           if (!move) return;
           setFen(game.fen());
           setLastMoveSquares({ [move.from]: true, [move.to]: true });
@@ -222,6 +246,17 @@ export default function PuzzleMode({ onClose, initialDifficulty = null }) {
       if (!chess || !puzzle || !targetSquare) return false;
       if (status === "solved" || status === "revealed") return false;
 
+      let expectedMove = null;
+      try {
+        expectedMove = playSolutionMove(
+          new Chess(chess.fen()),
+          puzzle.solution[solutionStep],
+        );
+      } catch {
+        return false;
+      }
+      if (!expectedMove) return false;
+
       let move = null;
       try {
         move = chess.move({
@@ -234,13 +269,13 @@ export default function PuzzleMode({ onClose, initialDifficulty = null }) {
       }
       if (!move) return false;
 
-      const expectedUci = puzzle.solution[solutionStep];
-      const expectedFrom = expectedUci.slice(0, 2);
-      const expectedTo = expectedUci.slice(2, 4);
-
-      if (sourceSquare === expectedFrom && targetSquare === expectedTo) {
+      if (
+        move.from === expectedMove.from &&
+        move.to === expectedMove.to &&
+        (move.promotion || null) === (expectedMove.promotion || null)
+      ) {
         setFen(chess.fen());
-        setLastMoveSquares({ [sourceSquare]: true, [targetSquare]: true });
+        setLastMoveSquares({ [move.from]: true, [move.to]: true });
         setArrows([]);
 
         const nextStep = solutionStep + 1;
@@ -268,34 +303,44 @@ export default function PuzzleMode({ onClose, initialDifficulty = null }) {
 
   const handleHint = useCallback(() => {
     if (!puzzle) return;
-    const uci = puzzle.solution[solutionStep];
-    const from = uci?.slice(0, 2);
-    const to = uci?.slice(2, 4);
-    if (from && to) {
-      setArrows([{ startSquare: from, endSquare: to, color: "#facc15" }]);
+    try {
+      const move = playSolutionMove(
+        new Chess(fen || puzzle.fen),
+        puzzle.solution[solutionStep],
+      );
+      if (move) {
+        setArrows([
+          { startSquare: move.from, endSquare: move.to, color: "#facc15" },
+        ]);
+        setLastMoveSquares({ [move.from]: true, [move.to]: true });
+      }
+    } catch {
+      /* ignore malformed quiz move */
     }
     setHintUsed(true);
-  }, [puzzle, solutionStep]);
+  }, [fen, puzzle, solutionStep]);
 
   const handleReveal = useCallback(() => {
     if (!puzzle || !chess) return;
     setSessionStats((stats) => ({ ...stats, failed: stats.failed + 1 }));
     const solutionArrows = [];
+    const revealGame = new Chess(chess.fen());
     for (const uci of puzzle.solution.slice(solutionStep)) {
       try {
-        const from = uci.slice(0, 2);
-        const to = uci.slice(2, 4);
-        chess.move({ from, to, promotion: uci[4] || "q" });
+        const move = playSolutionMove(revealGame, uci);
+        if (!move) continue;
         solutionArrows.push({
-          startSquare: from,
-          endSquare: to,
+          startSquare: move.from,
+          endSquare: move.to,
           color: "#86efac",
         });
       } catch {
         /* ignore */
       }
     }
-    setFen(chess.fen());
+    setChess(revealGame);
+    setFen(revealGame.fen());
+    setSolutionStep(puzzle.solution.length);
     setLastMoveSquares({});
     setArrows(solutionArrows);
     setStatus("revealed");
