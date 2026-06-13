@@ -21,6 +21,7 @@ import useAiChat from "@/hooks/use-ai-chat";
 import { useChessClock, TIME_CONTROLS } from "@/hooks/use-chess-clock";
 import useDarkMode from "@/hooks/use-dark-mode";
 import useEngineCoach from "@/hooks/use-engine-coach";
+import { getBotProfile } from "@/lib/bot-profiles";
 import { migrateMoveHistory } from "@/lib/chess-helpers";
 import { autoSave, loadAutoSave } from "@/lib/db";
 import { getBestMove } from "@/lib/engine";
@@ -86,7 +87,7 @@ const App = () => {
   }, []);
 
   const [opponent, setOpponent] = useState("engine");
-  const [difficulty, setDifficulty] = useState("medium");
+  const [difficulty, setDifficulty] = useState("club");
   const [playerColor, setPlayerColor] = useState("white");
   const playerColorReference = useRef(playerColor);
   useEffect(() => {
@@ -335,7 +336,7 @@ const App = () => {
             setOpponent(saved.opponent);
           }
           if (saved.difficulty) {
-            setDifficulty(saved.difficulty);
+            setDifficulty(getBotProfile(saved.difficulty).id);
           }
           if (saved.playerColor) {
             setPlayerColor(saved.playerColor);
@@ -405,7 +406,7 @@ const App = () => {
         setAnnotations({});
         if (saved.boardOrientation) setBoardOrientation(saved.boardOrientation);
         if (saved.opponent) setOpponent(saved.opponent);
-        if (saved.difficulty) setDifficulty(saved.difficulty);
+        if (saved.difficulty) setDifficulty(getBotProfile(saved.difficulty).id);
         if (saved.playerColor) setPlayerColor(saved.playerColor);
         const hist = game.history({ verbose: true });
         if (hist.length > 0) {

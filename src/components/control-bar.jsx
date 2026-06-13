@@ -10,6 +10,7 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { BOT_PROFILES } from "@/lib/bot-profiles";
 
 // ── Simple dropdown component ─────────────────────────────────────────────
 /**
@@ -132,16 +133,17 @@ export const Dropdown = ({
 };
 
 const OPPONENT_OPTIONS = [
-  { value: "engine", label: "Chess Engine", icon: Cpu, desc: "strongest" },
-  { value: "ai", label: "AI", icon: Bot, desc: "minimax" },
+  { value: "engine", label: "Elo Bot", icon: Cpu, desc: "Stockfish" },
+  { value: "ai", label: "Local Bot", icon: Bot, desc: "offline" },
   { value: "manual", label: "Manual", icon: User, desc: "2 players" },
 ];
 
-const DIFFICULTY_OPTIONS = [
-  { value: "easy", label: "Easy", desc: "~800 ELO" },
-  { value: "medium", label: "Medium", desc: "~1200 ELO" },
-  { value: "hard", label: "Hard", desc: "~1800 ELO" },
-];
+const BOT_OPTIONS = BOT_PROFILES.map((profile) => ({
+  value: profile.id,
+  label: profile.name,
+  desc: `${profile.elo} Elo`,
+  icon: profile.icon,
+}));
 
 // ── ControlBar ─────────────────────────────────────────────────────────────
 /**
@@ -178,8 +180,8 @@ const ControlBar = ({
       {/* Difficulty — visible when opponent is AI or Chess Engine */}
       {opponent !== "manual" && (
         <Dropdown
-          label="Difficulty"
-          options={DIFFICULTY_OPTIONS}
+          label="Bot"
+          options={BOT_OPTIONS}
           value={difficulty}
           onChange={onDifficultyChange}
         />

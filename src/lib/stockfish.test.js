@@ -83,6 +83,10 @@ describe("StockfishEngine", () => {
     expect(MockWorker.instances[0].messages).toContain("uci");
 
     await expect(engine.getMove("startpos", "medium")).resolves.toBe("e2e4");
+    expect(MockWorker.instances[0].messages).toContain(
+      "setoption name Skill Level value 8",
+    );
+    expect(MockWorker.instances[0].messages).toContain("go movetime 450");
 
     const analysis = await engine.analyze("startpos", 18, 3);
 

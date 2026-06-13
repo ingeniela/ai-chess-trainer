@@ -11,9 +11,8 @@
  */
 
 import { withBaseUrl } from "./base-url.js";
+import { getBotProfile } from "./bot-profiles.js";
 
-const SKILL = { easy: 3, medium: 12, hard: 20 };
-const MOVETIME = { easy: 150, medium: 800, hard: 2000 };
 const INIT_TIMEOUT_MS = 90_000;
 
 export class StockfishEngine {
@@ -103,7 +102,7 @@ export class StockfishEngine {
     if (p.type === "move") {
       if (line.startsWith("bestmove")) {
         this._pending = null;
-        const uci = line.split(" ")[1];
+        const [, uci] = line.split(" ");
         p.resolve(uci && uci !== "(none)" ? uci : null);
       }
     } else if (p.type === "analyze") {
@@ -130,7 +129,7 @@ export class StockfishEngine {
 
       if (line.startsWith("bestmove")) {
         this._pending = null;
-        const bestUci = line.split(" ")[1];
+        const [, bestUci] = line.split(" ");
         const lines = Object.values(p.infoLines).sort(
           (a, b) => a.pvIdx - b.pvIdx,
         );
@@ -161,22 +160,23 @@ export class StockfishEngine {
   // ── Get best move (game mode) ─────────────────────────────────────────────
   /**
    * @param {string} fen fen string representing the position
-   * @param {'easy'|'medium'|'hard'} difficulty controls skill level and movetime
+   * @param {string} botId named bot profile or legacy difficulty
    * @returns {Promise<string|null>} UCI move like "e2e4"
    */
-  async getMove(fen, difficulty = "medium") {
+  async getMove(fen, botId = "club") {
     await this.init();
     await this._abort();
 
-    const skill = SKILL[difficulty] ?? 12;
-    const movetime = MOVETIME[difficulty] ?? 800;
+    const profile = getBotProfile(botId);
 
     return new Promise((resolve, reject) => {
       this._pending = { type: "move", resolve, reject };
       this._worker.postMessage("setoption name MultiPV value 1");
-      this._worker.postMessage(`setoption name Skill Level value ${skill}`);
+      this._worker.postMessage(
+        `setoption name Skill Level value ${profile.skill}`,
+      );
       this._worker.postMessage(`position fen ${fen}`);
-      this._worker.postMessage(`go movetime ${movetime}`);
+      this._worker.postMessage(`go movetime ${profile.movetime}`);
     });
   }
 

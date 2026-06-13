@@ -7,6 +7,8 @@
 
 import { Chess } from "chess.js";
 
+import { getBotProfile } from "./bot-profiles.js";
+
 // Piece material values (centipawns)
 const PIECE_VALUES = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 };
 
@@ -126,15 +128,18 @@ export const getBestMove = (fen, difficulty = "medium") => {
   const moves = game.moves();
   if (!moves.length) return null;
 
-  // Easy: pure random
-  if (difficulty === "easy") {
+  const profile = getBotProfile(difficulty);
+
+  // Very low Elo bots should be unpredictable.
+  if (profile.elo <= 800) {
     return moves[Math.floor(Math.random() * moves.length)];
   }
 
-  const depth = difficulty === "medium" ? 2 : 3;
+  const depth = profile.elo < 1600 ? 2 : 3;
   const isWhite = game.turn() === "w";
 
-  let bestMove = moves[0];
+  const [firstMove] = moves;
+  let bestMove = firstMove;
   let bestScore = isWhite ? -Infinity : Infinity;
 
   // Shuffle for variation so equal-score moves aren't deterministic
