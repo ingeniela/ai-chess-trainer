@@ -1,12 +1,15 @@
 import { Chess } from "chess.js";
 import {
-  X,
   ChevronLeft,
   ChevronRight,
+  GraduationCap,
   Lightbulb,
+  ListChecks,
   SkipForward,
+  Trophy,
+  X,
 } from "lucide-react";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chessboard } from "react-chessboard";
 
 import { Button } from "@/components/ui/button";
@@ -16,27 +19,93 @@ import {
   shuffleQuizEntries,
 } from "@/lib/puzzle-quizzes";
 
-// Difficulty badge color
-const diffColor = {
-  easy: "text-green-400",
-  medium: "text-yellow-400",
-  hard: "text-red-400",
-};
-const themeEmoji = {
-  checkmate: "♟",
-  fork: "⚔️",
-  pin: "📌",
-  skewer: "🗡️",
-  discovered: "💥",
-  deflection: "🎭",
-  "back-rank": "🔒",
-  hanging: "🪝",
-  promotion: "👑",
+const DIFFICULTY_STYLE = {
+  easy: "bg-lime-300/20 text-lime-100 border-lime-300/30",
+  medium: "bg-amber-300/20 text-amber-100 border-amber-300/30",
+  hard: "bg-red-300/20 text-red-100 border-red-300/30",
 };
 
-// ── PuzzleMode ────────────────────────────────────────────────────────────────
+const THEME_ICON = {
+  checkmate: "K",
+  fork: "N",
+  pin: "B",
+  skewer: "R",
+  discovered: "*",
+  deflection: "D",
+  "back-rank": "R",
+  hanging: "Q",
+  promotion: "P",
+};
+
+const TEACHER_MESSAGE = {
+  idle: "Start with forcing moves: checks, captures, and threats. I will react after each attempt.",
+  "correct-step": "Good. Keep calculating the forced line after the reply.",
+  wrong:
+    "That misses the tactic. Look for loose pieces, overloaded defenders, or king exposure.",
+  solved: "Excellent. You found the tactic and completed the problem.",
+  revealed:
+    "Study the highlighted solution. Focus on why the first move forces the rest.",
+};
+
+const LoadingOverlay = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#242421] text-white">
+    Loading challenges...
+  </div>
+);
+
+const ErrorOverlay = ({ loadError, onClose }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#242421] p-4">
+    <div className="max-w-md rounded-xl bg-card p-5 text-sm text-foreground">
+      <p className="font-semibold">Challenge load failed</p>
+      <p className="mt-2 text-muted-foreground">
+        {loadError || "No puzzles available."}
+      </p>
+      <Button onClick={onClose} className="mt-4 w-full">
+        Close
+      </Button>
+    </div>
+  </div>
+);
+
+const ChallengeHeader = ({ onClose, puzzle, puzzleIndex, quizEntries }) => (
+  <header className="flex items-center justify-between bg-[#143719] px-7 py-5">
+    <div className="flex items-center gap-3">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-700/80 text-2xl font-black shadow-lg">
+        {THEME_ICON[puzzle.theme] ?? "P"}
+      </div>
+      <div>
+        <h2 className="text-3xl font-bold leading-none">Problems</h2>
+        <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-lime-200/70">
+          Puzzle {puzzleIndex + 1} / {quizEntries.length}
+        </p>
+      </div>
+    </div>
+    <button
+      onClick={onClose}
+      className="rounded-md p-2 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+      title="Close challenges"
+    >
+      <X className="h-4 w-4" />
+    </button>
+  </header>
+);
+
+const TeacherBubble = ({ status }) => (
+  <div className="mb-6 flex items-start gap-3">
+    <div className="mt-5 flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-emerald-900/70">
+      <GraduationCap className="h-11 w-11 text-lime-100" />
+    </div>
+    <div className="relative rounded-xl bg-white px-5 py-4 text-slate-900 shadow-lg">
+      <div className="absolute left-[-10px] top-7 h-0 w-0 border-y-8 border-r-[12px] border-y-transparent border-r-white" />
+      <p className="text-base font-semibold leading-snug">
+        {TEACHER_MESSAGE[status] || TEACHER_MESSAGE.idle}
+      </p>
+    </div>
+  </div>
+);
+
 /**
- *
+ * Renders the challenge/puzzle board with a teacher sidebar.
  */
 export default function PuzzleMode({ onClose, initialDifficulty = null }) {
   const [quizEntries, setQuizEntries] = useState([]);
@@ -44,13 +113,11 @@ export default function PuzzleMode({ onClose, initialDifficulty = null }) {
   const [loadError, setLoadError] = useState("");
   const [puzzleIndex, setPuzzleIndex] = useState(0);
   const [sessionStats, setSessionStats] = useState({ solved: 0, failed: 0 });
-
-  // Per-puzzle state
-  const [chess, setChess] = useState(null); // Chess instance for current puzzle
+  const [chess, setChess] = useState(null);
   const [puzzle, setPuzzle] = useState(null);
   const [fen, setFen] = useState("");
-  const [solutionStep, setSolutionStep] = useState(0); // which move in solution[] we're waiting for
-  const [status, setStatus] = useState("idle"); // "idle"|"correct-step"|"wrong"|"solved"|"revealed"
+  const [solutionStep, setSolutionStep] = useState(0);
+  const [status, setStatus] = useState("idle");
   const [wrongMoves, setWrongMoves] = useState(0);
   const [hintUsed, setHintUsed] = useState(false);
   const [arrows, setArrows] = useState([]);
@@ -63,15 +130,12 @@ export default function PuzzleMode({ onClose, initialDifficulty = null }) {
     const loadCatalog = async () => {
       setCatalogState("loading");
       setLoadError("");
-
       try {
         const data = await loadQuizCatalog();
         if (cancelled) return;
-
         const filtered = initialDifficulty
           ? data.items.filter((entry) => entry.difficulty === initialDifficulty)
           : data.items;
-
         setQuizEntries(shuffleQuizEntries(filtered));
         setPuzzleIndex(0);
         setCatalogState("ready");
@@ -85,30 +149,26 @@ export default function PuzzleMode({ onClose, initialDifficulty = null }) {
     };
 
     loadCatalog();
-
     return () => {
       cancelled = true;
       clearTimeout(engineTimeoutReference.current);
     };
   }, [initialDifficulty]);
 
-  // ── Initialise / reset on puzzle change ──────────────────────────────────
   useEffect(() => {
     const entry = quizEntries[puzzleIndex];
-    if (!entry) return;
+    if (!entry) return undefined;
 
     let cancelled = false;
 
     const loadPuzzle = async () => {
       clearTimeout(engineTimeoutReference.current);
-
       try {
         const nextPuzzle = await loadQuizByFile(entry.file);
         if (cancelled) return;
-
-        const g = new Chess(nextPuzzle.fen);
+        const game = new Chess(nextPuzzle.fen);
         setPuzzle(nextPuzzle);
-        setChess(g);
+        setChess(game);
         setFen(nextPuzzle.fen);
         setSolutionStep(0);
         setStatus("idle");
@@ -125,126 +185,122 @@ export default function PuzzleMode({ onClose, initialDifficulty = null }) {
     };
 
     loadPuzzle();
-
     return () => {
       cancelled = true;
     };
   }, [puzzleIndex, quizEntries]);
 
-  // ── Play the "engine" response (odd solution steps) ───────────────────────
   const playEngineMove = useCallback(
     (game, step) => {
-      const sol = puzzle?.solution;
-      if (!sol || step >= sol.length) return;
-      const uci = sol[step];
+      const solution = puzzle?.solution;
+      if (!solution || step >= solution.length) return;
+
+      const uci = solution[step];
       engineTimeoutReference.current = setTimeout(() => {
         try {
-          const mv = game.move({
+          const move = game.move({
             from: uci.slice(0, 2),
             to: uci.slice(2, 4),
             promotion: uci[4] || "q",
           });
-          if (!mv) return;
+          if (!move) return;
           setFen(game.fen());
-          setLastMoveSquares({ [mv.from]: true, [mv.to]: true });
+          setLastMoveSquares({ [move.from]: true, [move.to]: true });
           setSolutionStep(step + 1);
           setStatus("idle");
           setArrows([]);
         } catch {
           /* ignore */
         }
-      }, 600);
+      }, 550);
     },
     [puzzle],
   );
 
-  // ── Handle player piece drop ───────────────────────────────────────────────
   const handleDrop = useCallback(
-    (from, to) => {
-      if (!chess || !puzzle) return false;
+    ({ sourceSquare, targetSquare }) => {
+      if (!chess || !puzzle || !targetSquare) return false;
       if (status === "solved" || status === "revealed") return false;
 
-      // Attempt the move
-      let move;
+      let move = null;
       try {
-        move = chess.move({ from, to, promotion: "q" });
-        if (!move) return false;
+        move = chess.move({
+          from: sourceSquare,
+          to: targetSquare,
+          promotion: "q",
+        });
       } catch {
         return false;
       }
+      if (!move) return false;
 
       const expectedUci = puzzle.solution[solutionStep];
       const expectedFrom = expectedUci.slice(0, 2);
       const expectedTo = expectedUci.slice(2, 4);
 
-      // ─ Correct move ──────────────────────────────────────────────────────
-      if (from === expectedFrom && to === expectedTo) {
+      if (sourceSquare === expectedFrom && targetSquare === expectedTo) {
         setFen(chess.fen());
-        setLastMoveSquares({ [from]: true, [to]: true });
+        setLastMoveSquares({ [sourceSquare]: true, [targetSquare]: true });
         setArrows([]);
 
         const nextStep = solutionStep + 1;
         if (nextStep >= puzzle.solution.length) {
-          // Puzzle complete!
           setStatus("solved");
-          setSessionStats((s) => ({ ...s, solved: s.solved + 1 }));
+          setSessionStats((stats) => ({ ...stats, solved: stats.solved + 1 }));
         } else {
           setStatus("correct-step");
-          // Engine plays next
           playEngineMove(chess, nextStep);
         }
         return true;
       }
 
-      // ─ Wrong move — undo ───────────────────────────────────────────────────
       chess.undo();
-      setWrongMoves((n) => n + 1);
+      setWrongMoves((count) => count + 1);
       setStatus("wrong");
-      // Reset "wrong" indicator after 1s
-      setTimeout(() => setStatus((s) => (s === "wrong" ? "idle" : s)), 1200);
+      setTimeout(
+        () => setStatus((current) => (current === "wrong" ? "idle" : current)),
+        1200,
+      );
       return false;
     },
-    [chess, puzzle, solutionStep, status, playEngineMove],
+    [chess, puzzle, playEngineMove, solutionStep, status],
   );
 
-  // ── Hint: highlight the from-square of the expected move ─────────────────
   const handleHint = useCallback(() => {
     if (!puzzle) return;
     const uci = puzzle.solution[solutionStep];
-    const fromSq = uci?.slice(0, 2);
-    const toSq = uci?.slice(2, 4);
-    if (fromSq && toSq) {
-      setArrows([{ startSquare: fromSq, endSquare: toSq, color: "#f59e0b80" }]);
+    const from = uci?.slice(0, 2);
+    const to = uci?.slice(2, 4);
+    if (from && to) {
+      setArrows([{ startSquare: from, endSquare: to, color: "#facc15" }]);
     }
     setHintUsed(true);
   }, [puzzle, solutionStep]);
 
-  // ── Reveal solution ───────────────────────────────────────────────────────
   const handleReveal = useCallback(() => {
     if (!puzzle || !chess) return;
-    setSessionStats((s) => ({ ...s, failed: s.failed + 1 }));
-    // Play out remaining solution moves
-    const g = chess;
-    const newArrows = [];
-    const remaining = puzzle.solution.slice(solutionStep);
-    remaining.forEach((uci) => {
+    setSessionStats((stats) => ({ ...stats, failed: stats.failed + 1 }));
+    const solutionArrows = [];
+    for (const uci of puzzle.solution.slice(solutionStep)) {
       try {
         const from = uci.slice(0, 2);
         const to = uci.slice(2, 4);
-        const promo = uci[4];
-        g.move({ from, to, promotion: promo || "q" });
-        newArrows.push({ startSquare: from, endSquare: to, color: "#22c55e" });
+        chess.move({ from, to, promotion: uci[4] || "q" });
+        solutionArrows.push({
+          startSquare: from,
+          endSquare: to,
+          color: "#86efac",
+        });
       } catch {
-        /* */
+        /* ignore */
       }
-    });
-    setFen(g.fen());
+    }
+    setFen(chess.fen());
     setLastMoveSquares({});
-    setArrows(newArrows);
+    setArrows(solutionArrows);
     setStatus("revealed");
   }, [chess, puzzle, solutionStep]);
 
-  // ── Navigate puzzles ──────────────────────────────────────────────────────
   const goNext = useCallback(() => {
     clearTimeout(engineTimeoutReference.current);
     if (puzzleIndex < quizEntries.length - 1) {
@@ -257,285 +313,205 @@ export default function PuzzleMode({ onClose, initialDifficulty = null }) {
     if (puzzleIndex > 0) setPuzzleIndex((index) => index - 1);
   }, [puzzleIndex]);
 
-  if (catalogState === "loading") {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 text-sm text-muted-foreground">
-          Loading quiz library...
-        </div>
-      </div>
-    );
-  }
+  const boardOrientation = useMemo(() => {
+    if (!puzzle?.fen) return "white";
+    return new Chess(puzzle.fen).turn() === "w" ? "white" : "black";
+  }, [puzzle]);
 
-  if (catalogState === "ready" && !puzzle) {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 text-sm text-muted-foreground">
-          Loading puzzle...
-        </div>
-      </div>
-    );
+  const squareStyles = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.keys(lastMoveSquares).map((square) => [
+          square,
+          { backgroundColor: "rgba(250, 204, 21, 0.42)" },
+        ]),
+      ),
+    [lastMoveSquares],
+  );
+
+  if (catalogState === "loading" || (catalogState === "ready" && !puzzle)) {
+    return <LoadingOverlay />;
   }
 
   if (catalogState === "error") {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-        <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 max-w-md w-full space-y-3">
-          <p className="text-sm font-semibold text-foreground">
-            Quiz load failed
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {loadError || "No quizzes available."}
-          </p>
-          <Button onClick={onClose} className="w-full">
-            Close
-          </Button>
-        </div>
-      </div>
-    );
+    return <ErrorOverlay loadError={loadError} onClose={onClose} />;
   }
 
-  const orientation = new Chess(puzzle.fen).turn() === "w" ? "white" : "black";
-  const progressPct = ((solutionStep / puzzle.solution.length) * 100).toFixed(
-    0,
+  const progressPercent = Math.round(
+    (solutionStep / Math.max(1, puzzle.solution.length)) * 100,
   );
-
-  // Total puzzles solved in the session
-  const _totalDone = sessionStats.solved + sessionStats.failed;
-
-  const statusMessage =
-    {
-      idle: "Find the best move — drag a piece!",
-      "correct-step": "✓ Good move! Keep going…",
-      wrong: "✗ That's not the best move. Try again!",
-      solved: "🎉 Excellent! Puzzle solved!",
-      revealed: "Solution revealed — the green arrows show the line.",
-    }[status] ?? "";
-
-  const lastMoveStyle = Object.fromEntries(
-    Object.keys(lastMoveSquares).map((sq) => [
-      sq,
-      { backgroundColor: "rgba(255,255,0,0.35)" },
-    ]),
-  );
+  const canAct =
+    status === "idle" || status === "wrong" || status === "correct-step";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-card border border-border rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col md:flex-row gap-0 w-full max-w-225 overflow-hidden max-h-[95vh]">
-        {/* ── Left: Board ──────────────────────────────────────────────────── */}
-        <div className="shrink-0 w-full md:w-105 flex items-center justify-center p-4 bg-black/20">
-          <div className="w-full">
+    <div className="fixed inset-0 z-50 bg-[#242421] p-2">
+      <div className="grid h-full grid-cols-1 gap-2 overflow-hidden lg:grid-cols-[minmax(0,1fr)_570px]">
+        <main className="flex min-h-0 items-center justify-center overflow-hidden bg-[#1f1f1d] p-1">
+          <div className="w-full max-w-[min(calc(100vh-24px),calc(100vw-600px))]">
             <Chessboard
-              id="puzzle-board"
-              position={fen}
-              onPieceDrop={handleDrop}
-              boardOrientation={orientation}
-              arePiecesDraggable={status !== "solved" && status !== "revealed"}
-              customBoardStyle={{
-                borderRadius: "6px",
-                boxShadow: "0 4px 24px #0008",
-              }}
-              customDarkSquareStyle={{ backgroundColor: "#4a7c59" }}
-              customLightSquareStyle={{ backgroundColor: "#f0d9b5" }}
-              customSquareStyles={lastMoveStyle}
               options={{
-                showNotation: true,
+                id: "challenge-board",
+                position: fen,
+                onPieceDrop: handleDrop,
+                boardOrientation,
+                allowDragging: status !== "solved" && status !== "revealed",
+                boardStyle: { borderRadius: "0px" },
+                darkSquareStyle: { backgroundColor: "#739954" },
+                lightSquareStyle: { backgroundColor: "#ecefce" },
+                squareStyles,
                 arrows,
+                showNotation: true,
                 clearArrowsOnPositionChange: false,
               }}
             />
           </div>
-        </div>
+        </main>
 
-        {/* ── Right: Info panel ────────────────────────────────────────────── */}
-        <div className="flex flex-col flex-1 p-5 gap-4 min-w-0 overflow-y-auto">
-          {/* Header */}
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-primary font-semibold mb-0.5">
-                🧩 Puzzle Mode
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Puzzle {puzzleIndex + 1} / {quizEntries.length}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-md hover:bg-secondary"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+        <aside className="flex min-h-0 flex-col overflow-hidden rounded-sm bg-[#163f1f] text-white">
+          <ChallengeHeader
+            onClose={onClose}
+            puzzle={puzzle}
+            puzzleIndex={puzzleIndex}
+            quizEntries={quizEntries}
+          />
 
-          {/* Session stats */}
-          <div className="flex gap-3">
-            <div className="flex-1 bg-green-500/10 border border-green-500/20 rounded-lg p-2 text-center">
-              <p className="text-[10px] uppercase tracking-widest text-green-400 font-semibold">
-                Solved
-              </p>
-              <p className="text-xl font-bold text-green-300">
-                {sessionStats.solved}
-              </p>
-            </div>
-            <div className="flex-1 bg-red-500/10 border border-red-500/20 rounded-lg p-2 text-center">
-              <p className="text-[10px] uppercase tracking-widest text-red-400 font-semibold">
-                Missed
-              </p>
-              <p className="text-xl font-bold text-red-300">
-                {sessionStats.failed}
-              </p>
-            </div>
-          </div>
+          <section className="min-h-0 flex-1 overflow-y-auto bg-[linear-gradient(135deg,rgba(255,255,255,.04)_25%,transparent_25%,transparent_50%,rgba(255,255,255,.04)_50%,rgba(255,255,255,.04)_75%,transparent_75%,transparent)] bg-[length:120px_120px] p-7">
+            <TeacherBubble status={status} />
 
-          {/* Puzzle info */}
-          <div className="border border-border rounded-lg p-3 bg-secondary/30 space-y-1.5">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-semibold text-foreground">
-                {puzzle.title}
-              </span>
-              <span
-                className={`text-[10px] font-semibold uppercase tracking-wide ${diffColor[puzzle.difficulty]}`}
-              >
-                {puzzle.difficulty}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {themeEmoji[puzzle.theme] ?? "♟"} {puzzle.theme}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {puzzle.description}
-            </p>
-            {/* Progress bar for multi-move puzzles */}
-            {puzzle.solution.length > 1 && (
-              <div className="space-y-0.5">
-                <p className="text-[10px] text-muted-foreground">
-                  Move {solutionStep} / {puzzle.solution.length} in sequence
-                </p>
-                <div className="h-1 bg-border rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary transition-all duration-300"
-                    style={{ width: `${progressPct}%` }}
-                  />
+            <div className="mb-5 rounded-2xl bg-black/20 p-4 shadow-inner">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div>
+                  <p
+                    className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest ${
+                      DIFFICULTY_STYLE[puzzle.difficulty] ||
+                      DIFFICULTY_STYLE.easy
+                    }`}
+                  >
+                    {puzzle.difficulty} - {puzzle.theme}
+                  </p>
+                  <h3 className="mt-2 text-xl font-bold">{puzzle.title}</h3>
                 </div>
+                <GraduationCap className="h-6 w-6 text-lime-200" />
               </div>
-            )}
-          </div>
+              <p className="text-sm leading-relaxed text-white/80">
+                {puzzle.description}
+              </p>
+            </div>
 
-          {/* Status message */}
-          <div
-            className={`border rounded-lg p-3 text-sm font-medium transition-all ${
-              status === "solved"
-                ? "border-green-500/40 bg-green-500/10 text-green-400"
-                : status === "wrong"
-                  ? "border-red-500/40 bg-red-500/10 text-red-400"
-                  : status === "correct-step"
-                    ? "border-blue-500/40 bg-blue-500/10 text-blue-400"
-                    : status === "revealed"
-                      ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-400"
-                      : "border-border bg-secondary/20 text-muted-foreground"
-            }`}
-          >
-            {statusMessage}
-            {status === "wrong" && wrongMoves > 0 && (
-              <span className="block text-xs mt-0.5 opacity-70">
-                Incorrect attempt #{wrongMoves}
-              </span>
-            )}
-          </div>
+            <div className="mb-5 grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-lime-400/15 p-3">
+                <div className="flex items-center gap-2 text-lime-100">
+                  <Trophy className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase">Solved</span>
+                </div>
+                <p className="mt-1 text-2xl font-black">
+                  {sessionStats.solved}
+                </p>
+              </div>
+              <div className="rounded-xl bg-red-400/15 p-3">
+                <div className="flex items-center gap-2 text-red-100">
+                  <ListChecks className="h-4 w-4" />
+                  <span className="text-xs font-bold uppercase">Missed</span>
+                </div>
+                <p className="mt-1 text-2xl font-black">
+                  {sessionStats.failed}
+                </p>
+              </div>
+            </div>
 
-          {/* Actions */}
-          <div className="flex flex-col gap-2">
-            {(status === "idle" ||
-              status === "wrong" ||
-              status === "correct-step") && (
-              <>
+            <div className="mb-5">
+              <div className="mb-2 flex justify-between text-sm font-semibold">
+                <span>Line progress</span>
+                <span>
+                  {solutionStep}/{puzzle.solution.length}
+                </span>
+              </div>
+              <div className="h-3 overflow-hidden rounded-full bg-white/15">
+                <div
+                  className="h-full rounded-full bg-lime-400 transition-all duration-300"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+
+            <div
+              className={`rounded-xl border p-4 text-sm font-semibold ${
+                status === "solved"
+                  ? "border-lime-300/50 bg-lime-300/15 text-lime-100"
+                  : status === "wrong"
+                    ? "border-red-300/50 bg-red-500/20 text-red-50"
+                    : status === "correct-step"
+                      ? "border-sky-300/50 bg-sky-500/20 text-sky-50"
+                      : status === "revealed"
+                        ? "border-yellow-300/50 bg-yellow-500/20 text-yellow-50"
+                        : "border-white/15 bg-black/20 text-white/75"
+              }`}
+            >
+              {status === "idle" && "Find the best move on the board."}
+              {status === "correct-step" && "Good move. Continue the line."}
+              {status === "wrong" && `Incorrect attempt #${wrongMoves}.`}
+              {status === "solved" && "Solved. Nice calculation."}
+              {status === "revealed" && "Solution revealed on the board."}
+            </div>
+          </section>
+
+          <footer className="border-t border-white/10 bg-[#1b4a24] p-7">
+            <div className="mb-5 flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goPrevious}
+                disabled={puzzleIndex === 0}
+                className="bg-black/20 text-white hover:bg-black/30 hover:text-white"
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Prev
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={goNext}
+                disabled={puzzleIndex >= quizEntries.length - 1}
+                className="ml-auto bg-black/20 text-white hover:bg-black/30 hover:text-white"
+              >
+                Skip
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+
+            {canAct ? (
+              <div className="grid grid-cols-[1fr_1fr] gap-3">
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={handleHint}
-                  className="justify-start text-yellow-400 hover:text-yellow-300"
+                  className="h-14 bg-white/10 text-lime-100 hover:bg-white/15 hover:text-white"
                 >
-                  <Lightbulb className="w-3.5 h-3.5 mr-1.5" />
-                  {hintUsed ? "Hint shown (arrow on board)" : "Show Hint"}
+                  <Lightbulb className="mr-2 h-4 w-4" />
+                  {hintUsed ? "Hint shown" : "Hint"}
                 </Button>
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={handleReveal}
-                  className="justify-start text-muted-foreground text-xs"
+                  className="h-14 bg-white/10 text-white/80 hover:bg-white/15 hover:text-white"
                 >
-                  <SkipForward className="w-3.5 h-3.5 mr-1.5" />
-                  Reveal solution
+                  <SkipForward className="mr-2 h-4 w-4" />
+                  Reveal
                 </Button>
-              </>
-            )}
-            {(status === "solved" || status === "revealed") && (
+              </div>
+            ) : (
               <Button
                 onClick={goNext}
                 disabled={puzzleIndex >= quizEntries.length - 1}
-                className="w-full"
+                className="h-16 w-full bg-[#70b548] text-lg font-black text-white shadow-lg hover:bg-[#7fc653]"
               >
-                <ChevronRight className="w-4 h-4 mr-1" />
+                <ChevronRight className="mr-2 h-5 w-5" />
                 {puzzleIndex >= quizEntries.length - 1
-                  ? "All puzzles done! 🎉"
-                  : "Next Puzzle"}
+                  ? "All problems done"
+                  : "Next problem"}
               </Button>
             )}
-          </div>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-between pt-2 border-t border-border mt-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goPrevious}
-              disabled={puzzleIndex === 0}
-              className="text-muted-foreground"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              Prev
-            </Button>
-
-            {/* Dot indicators */}
-            <div className="flex gap-1 flex-wrap justify-center max-w-40">
-              {quizEntries
-                .slice(Math.max(0, puzzleIndex - 4), puzzleIndex + 5)
-                .map((entry, index) => {
-                  const absIndex = Math.max(0, puzzleIndex - 4) + index;
-                  return (
-                    <button
-                      key={entry.id}
-                      onClick={() => {
-                        clearTimeout(engineTimeoutReference.current);
-                        setPuzzleIndex(absIndex);
-                      }}
-                      className={`w-2 h-2 rounded-full transition-colors ${
-                        absIndex === puzzleIndex
-                          ? "bg-primary"
-                          : entry.difficulty === "hard"
-                            ? "bg-red-500/50"
-                            : entry.difficulty === "medium"
-                              ? "bg-yellow-500/50"
-                              : "bg-green-500/50"
-                      }`}
-                      title={`Puzzle ${absIndex + 1}: ${entry.title}`}
-                    />
-                  );
-                })}
-            </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goNext}
-              disabled={puzzleIndex >= quizEntries.length - 1}
-              className="text-muted-foreground"
-            >
-              Skip
-              <ChevronRight className="w-4 h-4 ml-1" />
-            </Button>
-          </div>
-        </div>
+          </footer>
+        </aside>
       </div>
     </div>
   );
