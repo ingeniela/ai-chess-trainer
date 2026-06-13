@@ -65,6 +65,7 @@ const App = () => {
   const [boardOrientation, setBoardOrientation] = useState("white");
   const [boardColors, setBoardColors] = useState(getStoredBoardColors);
   const [activeMode, setActiveMode] = useState("play");
+  const [modeRailCollapsed, setModeRailCollapsed] = useState(false);
 
   useEffect(() => {
     document.documentElement.lang =
@@ -980,12 +981,6 @@ const App = () => {
   return (
     <div className="flex flex-col h-screen">
       <ControlBar
-        isLiveMode={isLiveMode}
-        onToggleLiveMode={(enabled) => {
-          setIsLiveMode(enabled);
-          setActiveMode(enabled ? "play" : "training");
-          if (!enabled) setPuzzleOpen(false);
-        }}
         onNewGame={handleNewGame}
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenSavedGames={() => setSavedGamesOpen(true)}
@@ -1007,8 +1002,20 @@ const App = () => {
         onSetTimeControl={setClockTimeControl}
       />
 
-      <div className="grid flex-1 grid-cols-1 grid-rows-[auto_132px_auto_420px] overflow-y-auto lg:grid-cols-[168px_220px_minmax(0,1fr)_380px] lg:grid-rows-none lg:overflow-hidden">
-        <ModeRail activeMode={activeMode} onModeChange={handleModeChange} />
+      <div
+        className="grid flex-1 grid-cols-1 grid-rows-[auto_132px_auto_420px] overflow-y-auto lg:grid-cols-[var(--app-grid-columns)] lg:grid-rows-none lg:overflow-hidden"
+        style={{
+          "--app-grid-columns": modeRailCollapsed
+            ? "56px 220px minmax(0,1fr) 380px"
+            : "168px 220px minmax(0,1fr) 380px",
+        }}
+      >
+        <ModeRail
+          activeMode={activeMode}
+          collapsed={modeRailCollapsed}
+          onModeChange={handleModeChange}
+          onToggleCollapsed={() => setModeRailCollapsed((value) => !value)}
+        />
 
         <div className="min-h-0 min-w-0 border-b border-border lg:border-b-0">
           <MoveHistorySidebar

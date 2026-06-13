@@ -1,5 +1,4 @@
 import {
-  Zap,
   Settings,
   RotateCcw,
   User,
@@ -13,7 +12,6 @@ import {
 import { useState, useRef, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 
 // ── Simple dropdown component ─────────────────────────────────────────────
 /**
@@ -116,8 +114,6 @@ const DIFFICULTY_OPTIONS = [
  *
  */
 const ControlBar = ({
-  isLiveMode,
-  onToggleLiveMode,
   onNewGame,
   onOpenSettings,
   onOpenSavedGames,
@@ -169,20 +165,6 @@ const ControlBar = ({
             disabled={isGameInProgress}
           />
         )} */}
-
-      <div className="mx-1 h-4 w-px bg-border" />
-
-      <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary">
-        <Zap
-          className={`h-3.5 w-3.5 ${
-            isLiveMode ? "text-primary" : "text-muted-foreground"
-          }`}
-        />
-        <span className="hidden text-xs text-muted-foreground sm:inline">
-          {isLiveMode ? "Live Mode" : "Training"}
-        </span>
-        <Switch checked={isLiveMode} onCheckedChange={onToggleLiveMode} />
-      </div>
 
       <Button variant="ghost" size="sm" onClick={onNewGame}>
         <RotateCcw className="h-4 w-4" />
