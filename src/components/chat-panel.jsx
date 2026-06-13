@@ -217,7 +217,6 @@ const MoveChip = ({ move, idx, onPreview, onClearPreview }) => {
   const previewProperties = onPreview
     ? {
         type: "button",
-        title: "Preview this line on the board",
         onMouseEnter: onPreview,
         onMouseLeave: onClearPreview,
         onFocus: onPreview,
@@ -327,7 +326,7 @@ const MyMoveCard = ({ card, onPreviewLine, onClearPreview }) => {
           <div className="flex items-center gap-1.5">
             <Sparkles className="h-3 w-3 text-cyan-400 shrink-0" />
             <span className="text-[11px] font-semibold text-cyan-300">
-              Better:
+              Play:
             </span>
             <MoveChip
               move={card.suggestion.bestMove}
@@ -336,7 +335,10 @@ const MyMoveCard = ({ card, onPreviewLine, onClearPreview }) => {
             />
           </div>
           {card.suggestion.line.length > 0 && (
-            <div className="pl-5">
+            <div className="pl-5 space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                Engine line after that
+              </p>
               <MoveLine
                 moves={card.suggestion.line.slice(0, 4)}
                 startMoveNum={2}
