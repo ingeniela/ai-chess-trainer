@@ -174,6 +174,8 @@ const MoveHistorySidebar = ({
   // Annotations
   annotations = {},
   onAnnotationChange = null,
+  onPreviewMove = null,
+  onClearPreview = null,
 }) => {
   const { capturedPts } = useMemo(() => getCapturedPieces(game), [game]);
 
@@ -399,6 +401,10 @@ const MoveHistorySidebar = ({
                             role="button"
                             tabIndex={0}
                             onClick={() => onJumpToMove(pair.whiteIdx)}
+                            onMouseEnter={() => onPreviewMove?.(pair.whiteIdx)}
+                            onMouseLeave={() => onClearPreview?.()}
+                            onFocus={() => onPreviewMove?.(pair.whiteIdx)}
+                            onBlur={() => onClearPreview?.()}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
                                 onJumpToMove(pair.whiteIdx);
@@ -445,6 +451,12 @@ const MoveHistorySidebar = ({
                               role="button"
                               tabIndex={0}
                               onClick={() => onJumpToMove(pair.blackIdx)}
+                              onMouseEnter={() =>
+                                onPreviewMove?.(pair.blackIdx)
+                              }
+                              onMouseLeave={() => onClearPreview?.()}
+                              onFocus={() => onPreviewMove?.(pair.blackIdx)}
+                              onBlur={() => onClearPreview?.()}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter" || e.key === " ") {
                                   onJumpToMove(pair.blackIdx);

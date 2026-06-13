@@ -52,6 +52,7 @@ const App = () => {
   const [messages, setMessages] = useState([]);
   const [moveHistory, setMoveHistory] = useState([]); // { san, fen, from, to }[]
   const [viewIndex, setViewIndex] = useState(null);
+  const [previewMoveIndex, setPreviewMoveIndex] = useState(null);
   const viewIndexReference = useRef(null);
   useEffect(() => {
     viewIndexReference.current = viewIndex;
@@ -99,26 +100,28 @@ const App = () => {
   }, [opponent]);
   const triggerAIMoveReference = useRef(null);
   const [isAIThinking, setIsAIThinking] = useState(false);
+  const effectiveViewIndex =
+    previewMoveIndex === null ? viewIndex : previewMoveIndex;
 
   // ── Dark mode ────────────────────────────────────────────────────────────
   const { isDarkMode, toggleDarkMode } = useDarkMode();
 
   // ── Review mode ──────────────────────────────────────────────────────────
   const displayGame = useMemo(() => {
-    if (viewIndex === null) return gameReference.current;
+    if (effectiveViewIndex === null) return gameReference.current;
     const g = new Chess();
-    if (viewIndex < 0) return g;
-    const entry = moveHistory[viewIndex];
+    if (effectiveViewIndex < 0) return g;
+    const entry = moveHistory[effectiveViewIndex];
     if (entry?.fen) g.load(entry.fen);
     return g;
-  }, [viewIndex, moveHistory]);
+  }, [effectiveViewIndex, moveHistory]);
 
   const displayLastMoveSquares = useMemo(() => {
-    if (viewIndex === null) return lastMoveSquares;
-    if (viewIndex < 0) return null;
-    const entry = moveHistory[viewIndex];
+    if (effectiveViewIndex === null) return lastMoveSquares;
+    if (effectiveViewIndex < 0) return null;
+    const entry = moveHistory[effectiveViewIndex];
     return entry ? { from: entry.from, to: entry.to } : null;
-  }, [viewIndex, moveHistory, lastMoveSquares]);
+  }, [effectiveViewIndex, moveHistory, lastMoveSquares]);
 
   // ── Training board state (declared early — used in displayBoardGame memo) ───
   // Shape: { fen: string|null, orientation: string, arrows: [], isTrainingActive: bool }
@@ -255,6 +258,7 @@ const App = () => {
       setLastMoveSquares(null);
       setBestMoveArrows([]);
       setPreviewArrows([]);
+      setPreviewMoveIndex(null);
     } catch {
       // ignore invalid FEN from AI
     }
@@ -600,8 +604,20 @@ const App = () => {
   );
 
   // ── Review navigation ────────────────────────────────────────────────────
-  const handleJumpToMove = useCallback((index) => setViewIndex(index), []);
-  const handleExitReview = useCallback(() => setViewIndex(null), []);
+  const handleJumpToMove = useCallback((index) => {
+    setPreviewMoveIndex(null);
+    setViewIndex(index);
+  }, []);
+  const handleExitReview = useCallback(() => {
+    setPreviewMoveIndex(null);
+    setViewIndex(null);
+  }, []);
+  const handlePreviewHistoryMove = useCallback((index) => {
+    setPreviewMoveIndex(index);
+  }, []);
+  const handleClearHistoryPreview = useCallback(() => {
+    setPreviewMoveIndex(null);
+  }, []);
 
   const handleNavigateBack = useCallback(() => {
     setViewIndex((previous) => {
@@ -882,6 +898,7 @@ const App = () => {
     setFen(gameReference.current.fen());
     setMoveHistory([]);
     setViewIndex(null);
+    setPreviewMoveIndex(null);
     setMoveQuality(null);
     setMessages([]);
     setLastMoveSquares(null);
@@ -924,6 +941,7 @@ const App = () => {
         });
         setMoveHistory(newHistory);
         setViewIndex(null);
+        setPreviewMoveIndex(null);
         setBestMoveArrows([]);
         setPreviewArrows([]);
         setMoveQuality(null);
@@ -1037,6 +1055,8 @@ const App = () => {
       clockFlagged={clock.flagged}
       annotations={annotations}
       onAnnotationChange={handleAnnotationChange}
+      onPreviewMove={handlePreviewHistoryMove}
+      onClearPreview={handleClearHistoryPreview}
     />
   );
 
@@ -1087,7 +1107,9 @@ const App = () => {
             lastMoveSquares={displayBoardLastMove}
             isAIThinking={isAIThinking && !trainingBoard.isTrainingActive}
             boardOrientation={displayBoardOrientation}
-            isReviewMode={viewIndex !== null && !trainingBoard.isTrainingActive}
+            isReviewMode={
+              effectiveViewIndex !== null && !trainingBoard.isTrainingActive
+            }
             arrows={displayBoardArrows}
             premove={premove}
             playerColor={playerColor}
