@@ -45,6 +45,9 @@ const getStoredBoardColors = () => ({
   dark: localStorage.getItem("chess-board-dark") || "#779952",
 });
 
+const getStoredRightSidebarCollapsed = () =>
+  localStorage.getItem("chess-right-sidebar-collapsed") === "true";
+
 const normalizeCastlingTarget = (game, sourceSquare, targetSquare) => {
   if (!sourceSquare || !targetSquare) return targetSquare;
 
@@ -96,7 +99,9 @@ const App = () => {
   const [boardColors, setBoardColors] = useState(getStoredBoardColors);
   const [activeMode, setActiveMode] = useState("play");
   const [modeRailCollapsed, setModeRailCollapsed] = useState(false);
-  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(
+    getStoredRightSidebarCollapsed,
+  );
 
   useEffect(() => {
     document.documentElement.lang =
@@ -115,6 +120,13 @@ const App = () => {
         handleSettingsUpdate,
       );
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "chess-right-sidebar-collapsed",
+      String(rightSidebarCollapsed),
+    );
+  }, [rightSidebarCollapsed]);
 
   const [opponent, setOpponent] = useState("engine");
   const [difficulty, setDifficulty] = useState("club");
@@ -872,6 +884,7 @@ const App = () => {
           preFen,
           move.san,
           postFen,
+          newMoveHistory.length,
         );
         if (opponent !== "manual" && !game.isGameOver()) {
           playerAnalysis
@@ -1219,6 +1232,7 @@ const App = () => {
                   historyPanel={moveHistoryPanel}
                   onPreviewLine={handlePreviewLine}
                   onClearPreview={handleClearPreviewLine}
+                  onJumpToMove={handleJumpToMove}
                 />
               )}
             </>

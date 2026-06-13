@@ -204,7 +204,7 @@ const useEngineCoach = ({
 
   // ── Intelligence: analyze player's move vs Stockfish best ────────────
   const engineLiveAnalyzePlayerMove = useCallback(
-    async (preFen, moveSan, postFen) => {
+    async (preFen, moveSan, postFen, plyIndex = null) => {
       const sf = getStockfishEngine();
       const userElo = Number.parseInt(
         localStorage.getItem("chess-coach-elo") || "1000",
@@ -222,6 +222,7 @@ const useEngineCoach = ({
           postResult,
           userElo,
           seed,
+          plyIndex,
         );
         setMessages((previous) => [
           ...previous,

@@ -276,7 +276,7 @@ const MoveLine = ({
 /**
  *
  */
-const MyMoveCard = ({ card, onPreviewLine, onClearPreview }) => {
+const MyMoveCard = ({ card, onPreviewLine, onClearPreview, onJumpToMove }) => {
   const qs = QUALITY_STYLES[card.quality] || QUALITY_STYLES.Good;
   const hasSuggestion = card.suggestion && card.suggestion.bestMove;
   const previewSuggestion = (moves) => {
@@ -300,15 +300,31 @@ const MyMoveCard = ({ card, onPreviewLine, onClearPreview }) => {
           <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
             You played
           </span>
+          {card.moveNumberLabel && (
+            <span className="rounded bg-white/[0.06] px-1 py-0.5 text-[10px] font-mono text-muted-foreground">
+              {card.moveNumberLabel}
+            </span>
+          )}
           <MoveChip move={card.moveSan} />
         </div>
-        {card.evalAfter && (
-          <span
-            className={`text-xs font-mono tabular-nums ${evalColor(card.evalAfterRaw ?? null)}`}
-          >
-            {card.evalAfter}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {typeof card.plyIndex === "number" && onJumpToMove && (
+            <button
+              type="button"
+              onClick={() => onJumpToMove(card.plyIndex - 1)}
+              className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-white/10 hover:text-foreground"
+            >
+              Board
+            </button>
+          )}
+          {card.evalAfter && (
+            <span
+              className={`text-xs font-mono tabular-nums ${evalColor(card.evalAfterRaw ?? null)}`}
+            >
+              {card.evalAfter}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Varied message */}
@@ -1028,6 +1044,7 @@ const MessageBubble = ({
   onLearnWithAI,
   onPreviewLine,
   onClearPreview,
+  onJumpToMove,
 }) => {
   // Special structured cards
   if (msg.type === "my-move-analysis" && typeof msg.content === "object") {
@@ -1041,6 +1058,7 @@ const MessageBubble = ({
             card={msg.content}
             onPreviewLine={onPreviewLine}
             onClearPreview={onClearPreview}
+            onJumpToMove={onJumpToMove}
           />
         </div>
       </div>
@@ -1173,6 +1191,7 @@ const ChatPanel = ({
   historyPanel = null,
   onPreviewLine,
   onClearPreview,
+  onJumpToMove,
 }) => {
   const [input, setInput] = useState("");
   const messagesEndReference = useRef(null);
@@ -1344,6 +1363,7 @@ const ChatPanel = ({
             onLearnWithAI={onLearnWithAI}
             onPreviewLine={onPreviewLine}
             onClearPreview={onClearPreview}
+            onJumpToMove={onJumpToMove}
           />
         ))}
 

@@ -336,6 +336,7 @@ export const buildMyMoveCard = (
   postResult,
   userElo = 1000,
   messageSeed = 0,
+  plyIndex = null,
 ) => {
   const preTurn = new Chess(preFen).turn(); // color that just moved
   const playerColor = preTurn; // the player color who made the move
@@ -426,6 +427,11 @@ export const buildMyMoveCard = (
   return {
     type: "my-move-analysis",
     previewFen: preFen,
+    plyIndex,
+    moveNumberLabel:
+      typeof plyIndex === "number"
+        ? `${Math.floor((plyIndex - 1) / 2) + 1}${plyIndex % 2 === 0 ? "..." : "."}`
+        : null,
     moveSan,
     quality: quality.label,
     qualityEmoji: quality.emoji,
