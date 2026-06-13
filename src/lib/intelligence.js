@@ -425,6 +425,7 @@ export const buildMyMoveCard = (
 
   return {
     type: "my-move-analysis",
+    previewFen: preFen,
     moveSan,
     quality: quality.label,
     qualityEmoji: quality.emoji,
@@ -721,7 +722,7 @@ export const buildThreatCard = (
   // 3. Hanging pieces
   const hanging = findHangingPieces(game, playerColor);
   if (hanging.length > 0) {
-    const main = hanging[0];
+    const [main] = hanging;
     threats.push({
       id: "hanging",
       name: `Hanging ${PIECE_NAMES[main.piece]}`,
@@ -734,7 +735,7 @@ export const buildThreatCard = (
   // 4. Pins
   const { pins, skewers } = detectPinsAndSkewers(game, opponentColor);
   if (pins.length > 0) {
-    const p = pins[0];
+    const [p] = pins;
     const isAbsolute = p.pinnedAgainst === "k";
     threats.push({
       id: "pin",
@@ -748,7 +749,7 @@ export const buildThreatCard = (
 
   // 5. Skewers
   if (skewers.length > 0) {
-    const s = skewers[0];
+    const [s] = skewers;
     threats.push({
       id: "skewer",
       name: `${PIECE_NAMES[s.attackerPiece]} Skewer`,

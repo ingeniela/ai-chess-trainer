@@ -123,6 +123,7 @@ const App = () => {
   // ── Training board state (declared early — used in displayBoardGame memo) ───
   // Shape: { fen: string|null, orientation: string, arrows: [], isTrainingActive: bool }
   const [bestMoveArrows, setBestMoveArrows] = useState([]);
+  const [previewArrows, setPreviewArrows] = useState([]);
   const [trainingBoard, setTrainingBoard] = useState({
     fen: null,
     orientation: "white",
@@ -154,7 +155,9 @@ const App = () => {
 
   const displayBoardArrows = trainingBoard.isTrainingActive
     ? trainingBoard.arrows
-    : bestMoveArrows;
+    : previewArrows.length > 0
+      ? previewArrows
+      : bestMoveArrows;
 
   const displayBoardLastMove = trainingBoard.isTrainingActive
     ? null
@@ -251,6 +254,7 @@ const App = () => {
       setMoveHistory([]);
       setLastMoveSquares(null);
       setBestMoveArrows([]);
+      setPreviewArrows([]);
     } catch {
       // ignore invalid FEN from AI
     }
@@ -669,6 +673,31 @@ const App = () => {
     trainingHandlerReference.current = function_ ?? null;
   }, []);
 
+  const handlePreviewLine = useCallback((startFen, moves) => {
+    if (!startFen || !Array.isArray(moves) || moves.length === 0) return;
+
+    try {
+      const previewGame = new Chess(startFen);
+      const nextArrows = [];
+      for (const [index, san] of moves.entries()) {
+        const move = previewGame.move(san);
+        if (!move) break;
+        nextArrows.push({
+          startSquare: move.from,
+          endSquare: move.to,
+          color: index === 0 ? "#22c55e" : "#60a5fa",
+        });
+      }
+      setPreviewArrows(nextArrows);
+    } catch {
+      setPreviewArrows([]);
+    }
+  }, []);
+
+  const handleClearPreviewLine = useCallback(() => {
+    setPreviewArrows([]);
+  }, []);
+
   // ── Make a board move ────────────────────────────────────────────────────
   const handleMove = useCallback(
     (sourceSquare, targetSquare, piece) => {
@@ -743,6 +772,7 @@ const App = () => {
       setMoveQuality(null);
       setLastMoveSquares({ from: sourceSquare, to: targetSquare });
       setBestMoveArrows([]);
+      setPreviewArrows([]);
       clockReference.current.addIncrement(move.color);
       setPremove(null);
       premoveReference.current = null;
@@ -858,6 +888,7 @@ const App = () => {
     setIsAIThinking(false);
     setEvalScore(null);
     setBestMoveArrows([]);
+    setPreviewArrows([]);
     setGameReport(null);
     setIsAnalyzing(false);
     setAnalysisProgress(0);
@@ -894,6 +925,7 @@ const App = () => {
         setMoveHistory(newHistory);
         setViewIndex(null);
         setBestMoveArrows([]);
+        setPreviewArrows([]);
         setMoveQuality(null);
         setMessages([]);
         setIsAIThinking(false);
@@ -1101,6 +1133,8 @@ const App = () => {
               onLearnWithAI={handleLearnWithAI}
               tokenStats={tokenStats}
               historyPanel={moveHistoryPanel}
+              onPreviewLine={handlePreviewLine}
+              onClearPreview={handleClearPreviewLine}
             />
           )}
         </div>

@@ -194,7 +194,7 @@ const evalIcon = (wScore) => {
 /**
  *
  */
-const MoveChip = ({ move, idx }) => {
+const MoveChip = ({ move, idx, onPreview, onClearPreview }) => {
   // Detect special SAN features for mini colouring
   const isCapture = move.includes("x");
   const isCheck = move.includes("+");
@@ -213,9 +213,24 @@ const MoveChip = ({ move, idx }) => {
     cls = "bg-purple-500/15 text-purple-300 border-purple-500/25";
   }
 
+  const Component = onPreview ? "button" : "span";
+  const previewProperties = onPreview
+    ? {
+        type: "button",
+        title: "Preview this line on the board",
+        onMouseEnter: onPreview,
+        onMouseLeave: onClearPreview,
+        onFocus: onPreview,
+        onBlur: onClearPreview,
+      }
+    : {};
+
   return (
-    <span
-      className={`inline-flex items-center gap-0.5 text-[11px] font-mono font-medium px-1.5 py-0.5 rounded border ${cls}`}
+    <Component
+      className={`inline-flex items-center gap-0.5 text-[11px] font-mono font-medium px-1.5 py-0.5 rounded border ${
+        onPreview ? "cursor-pointer ring-offset-1 hover:ring-1" : ""
+      } ${cls}`}
+      {...previewProperties}
     >
       {idx !== undefined && (
         <span className="text-[9px] text-muted-foreground/60 mr-0.5">
@@ -223,7 +238,7 @@ const MoveChip = ({ move, idx }) => {
         </span>
       )}
       {move}
-    </span>
+    </Component>
   );
 };
 
@@ -231,12 +246,28 @@ const MoveChip = ({ move, idx }) => {
 /**
  *
  */
-const MoveLine = ({ moves, startMoveNum: startMoveNumber = 1 }) => {
+const MoveLine = ({
+  moves,
+  startMoveNum: startMoveNumber = 1,
+  getPreviewLine,
+  onPreviewLine,
+  onClearPreview,
+}) => {
   if (!moves || moves.length === 0) return null;
   return (
     <div className="flex flex-wrap gap-1 items-center">
       {moves.map((m, index) => (
-        <MoveChip key={index} move={m} idx={startMoveNumber + index} />
+        <MoveChip
+          key={index}
+          move={m}
+          idx={startMoveNumber + index}
+          onPreview={
+            onPreviewLine
+              ? () => onPreviewLine(getPreviewLine?.(index) ?? [m])
+              : undefined
+          }
+          onClearPreview={onClearPreview}
+        />
       ))}
     </div>
   );
@@ -246,9 +277,13 @@ const MoveLine = ({ moves, startMoveNum: startMoveNumber = 1 }) => {
 /**
  *
  */
-const MyMoveCard = ({ card }) => {
+const MyMoveCard = ({ card, onPreviewLine, onClearPreview }) => {
   const qs = QUALITY_STYLES[card.quality] || QUALITY_STYLES.Good;
   const hasSuggestion = card.suggestion && card.suggestion.bestMove;
+  const previewSuggestion = (moves) => {
+    if (!card.previewFen || !onPreviewLine) return;
+    onPreviewLine(card.previewFen, moves);
+  };
 
   return (
     <div
@@ -294,13 +329,23 @@ const MyMoveCard = ({ card }) => {
             <span className="text-[11px] font-semibold text-cyan-300">
               Better:
             </span>
-            <MoveChip move={card.suggestion.bestMove} />
+            <MoveChip
+              move={card.suggestion.bestMove}
+              onPreview={() => previewSuggestion([card.suggestion.bestMove])}
+              onClearPreview={onClearPreview}
+            />
           </div>
           {card.suggestion.line.length > 0 && (
             <div className="pl-5">
               <MoveLine
                 moves={card.suggestion.line.slice(0, 4)}
                 startMoveNum={2}
+                getPreviewLine={(index) => [
+                  card.suggestion.bestMove,
+                  ...card.suggestion.line.slice(0, index + 1),
+                ]}
+                onPreviewLine={(moves) => previewSuggestion(moves)}
+                onClearPreview={onClearPreview}
               />
             </div>
           )}
@@ -972,7 +1017,13 @@ const GlossaryDialog = ({ open, onClose }) => {
 /**
  *
  */
-const MessageBubble = ({ msg, onAskAI, onLearnWithAI }) => {
+const MessageBubble = ({
+  msg,
+  onAskAI,
+  onLearnWithAI,
+  onPreviewLine,
+  onClearPreview,
+}) => {
   // Special structured cards
   if (msg.type === "my-move-analysis" && typeof msg.content === "object") {
     return (
@@ -981,7 +1032,11 @@ const MessageBubble = ({ msg, onAskAI, onLearnWithAI }) => {
           <Cpu className="h-3.5 w-3.5 text-cyan-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <MyMoveCard card={msg.content} />
+          <MyMoveCard
+            card={msg.content}
+            onPreviewLine={onPreviewLine}
+            onClearPreview={onClearPreview}
+          />
         </div>
       </div>
     );
@@ -1111,6 +1166,8 @@ const ChatPanel = ({
   onLearnWithAI,
   tokenStats,
   historyPanel = null,
+  onPreviewLine,
+  onClearPreview,
 }) => {
   const [input, setInput] = useState("");
   const messagesEndReference = useRef(null);
@@ -1280,6 +1337,8 @@ const ChatPanel = ({
             msg={message}
             onAskAI={onAskAI}
             onLearnWithAI={onLearnWithAI}
+            onPreviewLine={onPreviewLine}
+            onClearPreview={onClearPreview}
           />
         ))}
 
