@@ -3,7 +3,10 @@ import {
   ChevronsRight,
   Gamepad2,
   GraduationCap,
+  Moon,
   Puzzle,
+  Settings,
+  Sun,
 } from "lucide-react";
 
 const MODES = [
@@ -27,10 +30,13 @@ const MODES = [
 const ModeRail = ({
   activeMode,
   collapsed,
+  isDarkMode,
   onModeChange,
+  onOpenSettings,
+  onToggleDarkMode,
   onToggleCollapsed,
 }) => (
-  <aside className="border-b border-border bg-card px-2 py-2 lg:border-b-0 lg:border-r lg:py-3">
+  <aside className="flex flex-col border-b border-border bg-card px-2 py-2 lg:border-b-0 lg:border-r lg:py-3">
     <div className="mb-2 hidden items-center justify-end lg:flex">
       <button
         type="button"
@@ -75,6 +81,32 @@ const ModeRail = ({
         );
       })}
     </nav>
+    <div
+      className={`mt-2 flex items-center gap-1 border-t border-border/60 pt-2 lg:mt-auto ${
+        collapsed ? "lg:flex-col" : "lg:justify-end"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onToggleDarkMode}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+        title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {isDarkMode ? (
+          <Sun className="h-4 w-4" />
+        ) : (
+          <Moon className="h-4 w-4" />
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={onOpenSettings}
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+        title="Settings"
+      >
+        <Settings className="h-4 w-4" />
+      </button>
+    </div>
   </aside>
 );
 

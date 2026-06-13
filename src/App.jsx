@@ -977,19 +977,46 @@ const App = () => {
     setPuzzleOpen(false);
   }, []);
 
+  const moveHistoryPanel = (
+    <MoveHistorySidebar
+      game={gameReference.current}
+      moveHistory={moveHistory}
+      evalScore={evalScore}
+      moveQuality={moveQuality}
+      viewIndex={viewIndex}
+      onJumpToMove={handleJumpToMove}
+      onExitReview={handleExitReview}
+      onNavigateBack={handleNavigateBack}
+      onNavigateForward={handleNavigateForward}
+      onFlipBoard={() =>
+        setBoardOrientation((o) => (o === "white" ? "black" : "white"))
+      }
+      onUndo={handleUndo}
+      onCopyPgn={handleCopyPgn}
+      isAnalyzing={isAnalyzing}
+      analysisProgress={analysisProgress}
+      gameReport={gameReport}
+      onViewReport={() => setGameReportOpen(true)}
+      clockEnabled={clockEnabled}
+      timeWhite={clock.timeWhite}
+      timeBlack={clock.timeBlack}
+      currentTurn={gameReference.current.turn()}
+      clockFlagged={clock.flagged}
+      annotations={annotations}
+      onAnnotationChange={handleAnnotationChange}
+    />
+  );
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-screen">
       <ControlBar
         onNewGame={handleNewGame}
-        onOpenSettings={() => setSettingsOpen(true)}
         onOpenSavedGames={() => setSavedGamesOpen(true)}
         opponent={opponent}
         onOpponentChange={setOpponent}
         difficulty={difficulty}
         onDifficultyChange={setDifficulty}
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
         isGameInProgress={moveHistory.length > 0}
         onSetPosition={() => setPositionSetupOpen(true)}
         onOpenPuzzles={() => setPuzzleOpen(true)}
@@ -1003,49 +1030,22 @@ const App = () => {
       />
 
       <div
-        className="grid flex-1 grid-cols-1 grid-rows-[auto_132px_auto_420px] overflow-y-auto lg:grid-cols-[var(--app-grid-columns)] lg:grid-rows-none lg:overflow-hidden"
+        className="grid flex-1 grid-cols-1 grid-rows-[auto_auto_620px] overflow-y-auto lg:grid-cols-[var(--app-grid-columns)] lg:grid-rows-none lg:overflow-hidden"
         style={{
           "--app-grid-columns": modeRailCollapsed
-            ? "56px 220px minmax(0,1fr) 380px"
-            : "168px 220px minmax(0,1fr) 380px",
+            ? "56px minmax(0,1fr) 440px"
+            : "168px minmax(0,1fr) 440px",
         }}
       >
         <ModeRail
           activeMode={activeMode}
           collapsed={modeRailCollapsed}
+          isDarkMode={isDarkMode}
           onModeChange={handleModeChange}
+          onOpenSettings={() => setSettingsOpen(true)}
+          onToggleDarkMode={toggleDarkMode}
           onToggleCollapsed={() => setModeRailCollapsed((value) => !value)}
         />
-
-        <div className="min-h-0 min-w-0 border-b border-border lg:border-b-0">
-          <MoveHistorySidebar
-            game={gameReference.current}
-            moveHistory={moveHistory}
-            evalScore={evalScore}
-            moveQuality={moveQuality}
-            viewIndex={viewIndex}
-            onJumpToMove={handleJumpToMove}
-            onExitReview={handleExitReview}
-            onNavigateBack={handleNavigateBack}
-            onNavigateForward={handleNavigateForward}
-            onFlipBoard={() =>
-              setBoardOrientation((o) => (o === "white" ? "black" : "white"))
-            }
-            onUndo={handleUndo}
-            onCopyPgn={handleCopyPgn}
-            isAnalyzing={isAnalyzing}
-            analysisProgress={analysisProgress}
-            gameReport={gameReport}
-            onViewReport={() => setGameReportOpen(true)}
-            clockEnabled={clockEnabled}
-            timeWhite={clock.timeWhite}
-            timeBlack={clock.timeBlack}
-            currentTurn={gameReference.current.turn()}
-            clockFlagged={clock.flagged}
-            annotations={annotations}
-            onAnnotationChange={handleAnnotationChange}
-          />
-        </div>
 
         <div className="flex min-h-[360px] items-center justify-center overflow-hidden bg-background p-2 sm:min-h-[520px] sm:p-3 lg:min-h-0 lg:p-4">
           <BoardPanel
@@ -1068,7 +1068,7 @@ const App = () => {
           />
         </div>
 
-        <div className="min-h-0 min-w-0 border-t border-border lg:border-t-0">
+        <div className="min-h-0 min-w-0 border-t border-border bg-card lg:border-l lg:border-t-0">
           {activeMode === "training" ? (
             <TrainingPanel
               onBoardUpdate={handleTrainingBoardUpdate}
@@ -1099,6 +1099,7 @@ const App = () => {
               onAskAI={handleAskAI}
               onLearnWithAI={handleLearnWithAI}
               tokenStats={tokenStats}
+              historyPanel={moveHistoryPanel}
             />
           )}
         </div>

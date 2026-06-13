@@ -1,13 +1,10 @@
 import {
-  Settings,
   RotateCcw,
   User,
   Bot,
   Cpu,
   ChevronDown,
   FolderOpen,
-  Moon,
-  Sun,
 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 
@@ -115,14 +112,11 @@ const DIFFICULTY_OPTIONS = [
  */
 const ControlBar = ({
   onNewGame,
-  onOpenSettings,
   onOpenSavedGames,
   opponent,
   onOpponentChange,
   difficulty,
   onDifficultyChange,
-  isDarkMode,
-  onToggleDarkMode,
   // Train
 }) => (
   <div className="flex items-center gap-2 overflow-x-auto border-b border-border bg-card px-2 py-2 sm:px-4 lg:justify-between">
@@ -194,23 +188,7 @@ const ControlBar = ({
     </div>
 
     {/* Right — dark mode + settings */}
-    <div className="flex shrink-0 items-center gap-1">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onToggleDarkMode}
-        title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        {isDarkMode ? (
-          <Sun className="h-4 w-4" />
-        ) : (
-          <Moon className="h-4 w-4" />
-        )}
-      </Button>
-      <Button variant="ghost" size="icon" onClick={onOpenSettings}>
-        <Settings className="h-4 w-4" />
-      </Button>
-    </div>
+    <div className="shrink-0" />
   </div>
 );
 

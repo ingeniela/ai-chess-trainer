@@ -1110,18 +1110,27 @@ const ChatPanel = ({
   onAskAI,
   onLearnWithAI,
   tokenStats,
+  historyPanel = null,
 }) => {
   const [input, setInput] = useState("");
   const messagesEndReference = useRef(null);
   const [glossaryOpen, setGlossaryOpen] = useState(false);
-
-  const activeTab = coachMode === "ai" ? "ai" : "engine";
+  const [selectedTab, setSelectedTab] = useState(null);
+  const activeTab =
+    selectedTab === "history"
+      ? "history"
+      : coachMode === "ai"
+        ? "ai"
+        : "engine";
 
   /**
    *
    */
   const handleTabClick = (tab) => {
-    onCoachModeChange?.(tab);
+    setSelectedTab(tab === "history" ? "history" : null);
+    if (tab !== "history") {
+      onCoachModeChange?.(tab);
+    }
   };
 
   useEffect(() => {
@@ -1175,6 +1184,9 @@ const ChatPanel = ({
   const tabs = [
     { id: "engine", icon: Cpu, label: "Engine", iconCls: "text-cyan-400" },
     { id: "ai", icon: Bot, label: "AI Coach" },
+    ...(historyPanel
+      ? [{ id: "history", icon: BookOpen, label: "History" }]
+      : []),
   ];
 
   const contextLabel = tokenStats
@@ -1182,7 +1194,7 @@ const ChatPanel = ({
     : null;
 
   return (
-    <div className="flex h-full flex-col bg-card lg:border-l lg:border-border">
+    <div className="flex h-full flex-col bg-card">
       {/* Glossary modal */}
       <GlossaryDialog
         open={glossaryOpen}
@@ -1228,8 +1240,16 @@ const ChatPanel = ({
         </button>
       </div>
 
+      {activeTab === "history" && (
+        <div className="min-h-0 flex-1 overflow-hidden">{historyPanel}</div>
+      )}
+
       {/* Messages area */}
-      <div className="flex-1 space-y-3 overflow-y-auto p-3 lg:space-y-4 lg:p-4">
+      <div
+        className={`flex-1 space-y-3 overflow-y-auto p-3 lg:space-y-4 lg:p-4 ${
+          activeTab === "history" ? "hidden" : ""
+        }`}
+      >
         {visibleMessages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             {activeTab === "engine" ? (
@@ -1286,7 +1306,7 @@ const ChatPanel = ({
       </div>
 
       {/* Bottom action area */}
-      {activeTab === "engine" ? (
+      {activeTab === "history" ? null : activeTab === "engine" ? (
         <div className="space-y-2 border-t border-border p-2 lg:p-3">
           <div className="grid grid-cols-3 gap-2">
             <Button

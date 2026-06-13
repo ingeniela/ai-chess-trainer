@@ -18,6 +18,10 @@ const PLAYER_COLOR_OPTIONS = [
 
 // ── piece value map for captured material calculation ──
 const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+const PIECE_ICONS = {
+  w: { p: "♙", n: "♘", b: "♗", r: "♖", q: "♕", k: "♔" },
+  b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" },
+};
 
 // ── sounds (Web Audio) ──
 /**
@@ -110,11 +114,35 @@ const getCapturedPieces = (game) => {
 };
 
 // ── Captured piece row — defined outside BoardPanel to avoid React warnings ──
-const CapturedRow = ({ totalPts, adv }) => (
+const withPieceIds = (pieces) => {
+  const counts = {};
+  return pieces.map((piece) => {
+    counts[piece] = (counts[piece] || 0) + 1;
+    return { id: `${piece}-${counts[piece]}`, piece };
+  });
+};
+
+const CapturedRow = ({ totalPts, adv, pieces = [] }) => (
   <div className="flex items-center gap-1.5 min-h-5.5">
     {totalPts > 0 && (
       <span className="text-xs font-medium text-foreground tabular-nums">
         {totalPts} pts
+      </span>
+    )}
+    {pieces.length > 0 && (
+      <span className="flex max-w-40 flex-wrap items-center gap-0.5 leading-none">
+        {withPieceIds(pieces).map(({ id, piece }) => {
+          const [color, type] = piece;
+          return (
+            <span
+              key={id}
+              className="text-sm text-foreground"
+              title={`${color === "w" ? "White" : "Black"} ${type}`}
+            >
+              {PIECE_ICONS[color]?.[type] || ""}
+            </span>
+          );
+        })}
       </span>
     )}
     {adv > 0 && (
@@ -207,7 +235,7 @@ const BoardPanel = ({
   }, [inCheck, isCheckmate, isStalemate, isDraw]);
 
   // ── Captured pieces ──
-  const { capturedPts, advantage } = useMemo(
+  const { captured, capturedPts, advantage } = useMemo(
     () => getCapturedPieces(game),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [game, fen], // fen ensures re-computation on every move (game is mutable)
@@ -478,6 +506,7 @@ const BoardPanel = ({
           totalPts={
             boardOrientation === "white" ? capturedPts.w : capturedPts.b
           }
+          pieces={boardOrientation === "white" ? captured.w : captured.b}
           adv={
             boardOrientation === "white"
               ? advantage < 0
@@ -578,6 +607,7 @@ const BoardPanel = ({
           totalPts={
             boardOrientation === "white" ? capturedPts.b : capturedPts.w
           }
+          pieces={boardOrientation === "white" ? captured.b : captured.w}
           adv={
             boardOrientation === "white"
               ? advantage > 0

@@ -223,7 +223,7 @@ const MoveHistorySidebar = ({
   };
 
   return (
-    <div className="flex h-full flex-col border-r border-border bg-card">
+    <div className="flex h-full flex-col bg-card">
       {/* Controls: Flip + quality badge + Undo */}
       <div className="flex shrink-0 items-center gap-1 border-b border-border px-2 py-1.5 lg:py-2">
         <Button
