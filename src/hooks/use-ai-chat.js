@@ -172,6 +172,9 @@ export const getProvider = () =>
 export const getApiKey = () =>
   localStorage.getItem("chess-coach-api-key") || "";
 
+export const getOpenRouterApiKey = () =>
+  localStorage.getItem("chess-openrouter-api-key") || "";
+
 export const getGoogleApiKey = () =>
   localStorage.getItem("chess-google-api-key") || "";
 
@@ -180,6 +183,27 @@ export const getGoogleModel = () =>
 
 export const getModel = () =>
   localStorage.getItem("chess-coach-model") || "gpt-4o-mini";
+
+export const getOpenRouterModel = () =>
+  localStorage.getItem("chess-openrouter-model") || "openai/gpt-4o-mini";
+
+const getTextProviderConfig = () => {
+  const provider = getProvider();
+  if (provider === "openrouter") {
+    return {
+      provider,
+      apiKey: getOpenRouterApiKey(),
+      model: getOpenRouterModel(),
+      label: "OpenRouter",
+    };
+  }
+  return {
+    provider: "openai",
+    apiKey: getApiKey(),
+    model: getModel(),
+    label: "OpenAI",
+  };
+};
 
 export const getElo = () =>
   Number.parseInt(localStorage.getItem("chess-coach-elo") || "1000", 10);
@@ -245,6 +269,7 @@ const useAiChat = ({
                 existingSummary: conversationSummary,
                 apiKey,
                 model,
+                provider,
               });
 
         return trimSummary(summary);
@@ -425,9 +450,9 @@ const useAiChat = ({
   );
 
   // ── OpenAI path (text only) ───────────────────────────────────────────────
-  const handleOpenAIMessage = useCallback(
+  const handleTextProviderMessage = useCallback(
     async (userMessageContent, promptOverride) => {
-      const apiKey = getApiKey();
+      const { provider, apiKey, model, label } = getTextProviderConfig();
       const rawUserMessage = promptOverride || userMessageContent;
 
       if (!apiKey) {
@@ -435,8 +460,7 @@ const useAiChat = ({
           ...previous,
           {
             role: "assistant",
-            content:
-              "Please set your OpenAI API key in Settings (gear icon) to start chatting.",
+            content: `Please set your ${label} API key in Settings (gear icon) to start chatting.`,
           },
         ]);
         return;
@@ -447,9 +471,9 @@ const useAiChat = ({
       try {
         const { recentHistory, prompt, estimatedTokens, summaryEnabled } =
           await compactConversation({
-            provider: "openai",
+            provider,
             apiKey,
-            model: getModel(),
+            model,
             rawUserMessage,
           });
         const allMessages = [
@@ -461,7 +485,8 @@ const useAiChat = ({
           messages: allMessages,
           fen: gameRef.current.fen(),
           apiKey,
-          model: getModel(),
+          model,
+          provider,
         });
 
         setTokenStats({
@@ -497,24 +522,24 @@ const useAiChat = ({
       if (getProvider() === "google") {
         await handleGoogleMessage(text);
       } else {
-        await handleOpenAIMessage(text);
+        await handleTextProviderMessage(text);
       }
     },
-    [setMessages, handleGoogleMessage, handleOpenAIMessage],
+    [setMessages, handleGoogleMessage, handleTextProviderMessage],
   );
 
   // ── Evaluate last move quality (live mode, OpenAI only) ──────────────────
   const evaluateLastMove = useCallback(
     async (lastMove, currentFen) => {
-      // Only run with OpenAI for now (fast, cheap)
-      const apiKey = getApiKey();
+      const { provider, apiKey, model } = getTextProviderConfig();
       if (!apiKey) return;
       try {
         const result = await evaluateMove({
           fen: currentFen,
           lastMove,
           apiKey,
-          model: getModel(),
+          model,
+          provider,
         });
         const firstLine = result.split("\n")[0].trim();
         const quality = firstLine.replace(/[^A-Za-z]/g, "");
@@ -557,7 +582,7 @@ const useAiChat = ({
           prompt,
         );
       } else {
-        await handleOpenAIMessage(
+        await handleTextProviderMessage(
           `Explain: ${threatName} after ${moveSan}`,
           prompt,
         );
@@ -568,7 +593,7 @@ const useAiChat = ({
       setMessages,
       setCoachMode,
       handleGoogleMessage,
-      handleOpenAIMessage,
+      handleTextProviderMessage,
     ],
   );
 
@@ -616,7 +641,7 @@ const useAiChat = ({
       if (getProvider() === "google") {
         await handleGoogleMessage(userLabel, prompt);
       } else {
-        await handleOpenAIMessage(userLabel, prompt);
+        await handleTextProviderMessage(userLabel, prompt);
       }
     },
     [
@@ -624,7 +649,7 @@ const useAiChat = ({
       setMessages,
       setCoachMode,
       handleGoogleMessage,
-      handleOpenAIMessage,
+      handleTextProviderMessage,
     ],
   );
 

@@ -454,9 +454,19 @@ const useEngineCoach = ({
           sanMoves: pvToSan(fen, l.pv),
         }));
 
-        const apiKey = localStorage.getItem("chess-coach-api-key") || "";
+        const provider =
+          localStorage.getItem("chess-ai-provider") === "openrouter"
+            ? "openrouter"
+            : "openai";
+        const apiKey =
+          provider === "openrouter"
+            ? localStorage.getItem("chess-openrouter-api-key") || ""
+            : localStorage.getItem("chess-coach-api-key") || "";
         const model =
-          localStorage.getItem("chess-coach-model") || "gpt-4o-mini";
+          provider === "openrouter"
+            ? localStorage.getItem("chess-openrouter-model") ||
+              "openai/gpt-4o-mini"
+            : localStorage.getItem("chess-coach-model") || "gpt-4o-mini";
         const elo = Number.parseInt(
           localStorage.getItem("chess-coach-elo") || "1000",
           10,
@@ -473,6 +483,7 @@ const useEngineCoach = ({
               elo,
               apiKey,
               model,
+              provider,
             });
 
             content = buildGMMarkdownFromAI(gmData, fen);

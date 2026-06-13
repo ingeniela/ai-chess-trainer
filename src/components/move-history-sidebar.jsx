@@ -88,6 +88,34 @@ const EvalBar = ({ score }) => {
 };
 
 const PIECE_VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+const PIECE_ICONS = {
+  w: { p: "♙", n: "♘", b: "♗", r: "♖", q: "♕", k: "♔" },
+  b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" },
+};
+
+const getMovePieceType = (move) => {
+  const san = String(move?.san ?? move ?? "");
+  if (move?.piece) return move.piece;
+  if (san.startsWith("O-O")) return "k";
+  const piece = san.match(/^[KQRBN]/)?.[0];
+  return piece ? piece.toLowerCase() : "p";
+};
+
+const MoveLabel = ({ move, color }) => {
+  const pieceType = getMovePieceType(move);
+  const san = move?.san ?? move;
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className="inline-flex h-4 w-4 items-center justify-center text-base leading-none opacity-90"
+        aria-hidden="true"
+      >
+        {PIECE_ICONS[color]?.[pieceType] || PIECE_ICONS[color]?.p}
+      </span>
+      <span>{san}</span>
+    </span>
+  );
+};
 
 /**
  *
@@ -154,11 +182,9 @@ const MoveHistorySidebar = ({
   for (let index = 0; index < moveHistory.length; index += 2) {
     pairs.push({
       number: Math.floor(index / 2) + 1,
-      white: moveHistory[index]?.san ?? moveHistory[index],
+      white: moveHistory[index] ?? null,
       whiteIdx: index,
-      black: moveHistory[index + 1]
-        ? (moveHistory[index + 1]?.san ?? moveHistory[index + 1])
-        : null,
+      black: moveHistory[index + 1] ?? null,
       blackIdx: index + 1,
     });
   }
@@ -197,9 +223,9 @@ const MoveHistorySidebar = ({
   };
 
   return (
-    <div className="flex flex-col h-full border-r border-border bg-card">
+    <div className="flex h-full flex-col border-r border-border bg-card">
       {/* Controls: Flip + quality badge + Undo */}
-      <div className="flex items-center gap-1 px-2 py-2 border-b border-border shrink-0">
+      <div className="flex shrink-0 items-center gap-1 border-b border-border px-2 py-1.5 lg:py-2">
         <Button
           variant="ghost"
           size="sm"
@@ -301,7 +327,7 @@ const MoveHistorySidebar = ({
       )}
 
       {/* Move list */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {pairs.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-4">
             <BookOpen className="h-8 w-8 mb-2 opacity-20" />
@@ -311,7 +337,7 @@ const MoveHistorySidebar = ({
             </p>
           </div>
         ) : (
-          <table className="w-full text-xs font-mono border-collapse">
+          <table className="w-full border-collapse font-mono text-[11px] lg:text-xs">
             <thead>
               <tr className="text-muted-foreground border-b border-border sticky top-0 bg-card">
                 <th className="text-left px-2 py-1.5 w-7">#</th>
@@ -387,7 +413,7 @@ const MoveHistorySidebar = ({
                                     : "font-semibold text-foreground hover:bg-secondary/60"
                               }`}
                           >
-                            {pair.white}
+                            <MoveLabel move={pair.white} color="w" />
                           </span>
                           {onAnnotationChange && (
                             <button
@@ -433,7 +459,7 @@ const MoveHistorySidebar = ({
                                       : "text-foreground hover:bg-secondary/60"
                                 }`}
                             >
-                              {pair.black}
+                              <MoveLabel move={pair.black} color="b" />
                             </span>
                             {onAnnotationChange && (
                               <button
@@ -596,7 +622,9 @@ const MoveHistorySidebar = ({
       )}
 
       {/* Evaluation bar pinned at bottom */}
-      <EvalBar score={evalScore} />
+      <div className="hidden lg:block">
+        <EvalBar score={evalScore} />
+      </div>
     </div>
   );
 };

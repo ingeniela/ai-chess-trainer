@@ -8,6 +8,7 @@ import ChatPanel from "@/components/chat-panel";
 import ControlBar from "@/components/control-bar";
 import EndgameMode from "@/components/endgame-mode";
 import GameReportDialog from "@/components/game-report-dialog";
+import ModeRail from "@/components/mode-rail";
 import MoveHistorySidebar from "@/components/move-history-sidebar";
 import OpeningDrillMode from "@/components/opening-drill-mode";
 import OpeningStatsPanel from "@/components/opening-stats-panel";
@@ -33,6 +34,15 @@ import {
 
 // ── Local helpers ─────────────────────────────────────────────────────────────
 const getApiKey = () => localStorage.getItem("chess-coach-api-key") || "";
+const getTextApiKey = () =>
+  localStorage.getItem("chess-ai-provider") === "openrouter"
+    ? localStorage.getItem("chess-openrouter-api-key") || ""
+    : getApiKey();
+
+const getStoredBoardColors = () => ({
+  light: localStorage.getItem("chess-board-light") || "#edeed1",
+  dark: localStorage.getItem("chess-board-dark") || "#779952",
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 const App = () => {
@@ -46,13 +56,33 @@ const App = () => {
     viewIndexReference.current = viewIndex;
   }, [viewIndex]);
 
-  const [isLiveMode, setIsLiveMode] = useState(false);
+  const [isLiveMode, setIsLiveMode] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [moveQuality, setMoveQuality] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [lastMoveSquares, setLastMoveSquares] = useState(null);
   const [evalScore, setEvalScore] = useState(null);
   const [boardOrientation, setBoardOrientation] = useState("white");
+  const [boardColors, setBoardColors] = useState(getStoredBoardColors);
+  const [activeMode, setActiveMode] = useState("play");
+
+  useEffect(() => {
+    document.documentElement.lang =
+      localStorage.getItem("chess-language") || "en";
+
+    const handleSettingsUpdate = () => {
+      setBoardColors(getStoredBoardColors());
+      document.documentElement.lang =
+        localStorage.getItem("chess-language") || "en";
+    };
+
+    window.addEventListener("chess-settings-updated", handleSettingsUpdate);
+    return () =>
+      window.removeEventListener(
+        "chess-settings-updated",
+        handleSettingsUpdate,
+      );
+  }, []);
 
   const [opponent, setOpponent] = useState("engine");
   const [difficulty, setDifficulty] = useState("medium");
@@ -503,7 +533,7 @@ const App = () => {
             if (
               isLiveModeReference.current &&
               coachModeReference.current === "ai" &&
-              getApiKey()
+              getTextApiKey()
             ) {
               evaluateLastMove(
                 move.san,
@@ -759,7 +789,7 @@ const App = () => {
         }
       } else {
         updateEvalBar(postFen);
-        if (isLiveMode && coachMode === "ai" && getApiKey()) {
+        if (isLiveMode && coachMode === "ai" && getTextApiKey()) {
           evaluateLastMove(
             move.san,
             postFen,
@@ -930,12 +960,32 @@ const App = () => {
     }
   }, [opponent]);
 
+  const handleModeChange = useCallback((mode) => {
+    setActiveMode(mode);
+    if (mode === "play") {
+      setIsLiveMode(true);
+      setPuzzleOpen(false);
+      return;
+    }
+    if (mode === "challenges") {
+      setIsLiveMode(true);
+      setPuzzleOpen(true);
+      return;
+    }
+    setIsLiveMode(false);
+    setPuzzleOpen(false);
+  }, []);
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-screen">
       <ControlBar
         isLiveMode={isLiveMode}
-        onToggleLiveMode={setIsLiveMode}
+        onToggleLiveMode={(enabled) => {
+          setIsLiveMode(enabled);
+          setActiveMode(enabled ? "play" : "training");
+          if (!enabled) setPuzzleOpen(false);
+        }}
         onNewGame={handleNewGame}
         onOpenSettings={() => setSettingsOpen(true)}
         onOpenSavedGames={() => setSavedGamesOpen(true)}
@@ -957,8 +1007,10 @@ const App = () => {
         onSetTimeControl={setClockTimeControl}
       />
 
-      <div className="grid grid-cols-[220px_1fr_380px] flex-1 overflow-hidden">
-        <div className="min-w-0 min-h-0">
+      <div className="grid flex-1 grid-cols-1 grid-rows-[auto_132px_auto_420px] overflow-y-auto lg:grid-cols-[168px_220px_minmax(0,1fr)_380px] lg:grid-rows-none lg:overflow-hidden">
+        <ModeRail activeMode={activeMode} onModeChange={handleModeChange} />
+
+        <div className="min-h-0 min-w-0 border-b border-border lg:border-b-0">
           <MoveHistorySidebar
             game={gameReference.current}
             moveHistory={moveHistory}
@@ -988,7 +1040,7 @@ const App = () => {
           />
         </div>
 
-        <div className="flex items-center justify-center bg-background overflow-hidden p-4">
+        <div className="flex min-h-[360px] items-center justify-center overflow-hidden bg-background p-2 sm:min-h-[520px] sm:p-3 lg:min-h-0 lg:p-4">
           <BoardPanel
             game={displayBoardGame}
             onMove={handleMove}
@@ -1005,11 +1057,12 @@ const App = () => {
               setPremove(null);
               premoveReference.current = null;
             }}
+            boardColors={boardColors}
           />
         </div>
 
-        <div className="min-w-0 min-h-0">
-          {!isLiveMode ? (
+        <div className="min-h-0 min-w-0 border-t border-border lg:border-t-0">
+          {activeMode === "training" ? (
             <TrainingPanel
               onBoardUpdate={handleTrainingBoardUpdate}
               onRegisterMoveHandler={handleRegisterMoveHandler}

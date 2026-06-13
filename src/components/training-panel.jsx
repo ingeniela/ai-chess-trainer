@@ -2013,7 +2013,7 @@ export default function TrainingPanel({
   // If no training module is selected, show module selector
   if (!activeModule) {
     return (
-      <div className="flex flex-col h-full border-l border-border bg-card animate-in fade-in slide-in-from-left-2 duration-200">
+      <div className="flex h-full flex-col bg-card animate-in fade-in slide-in-from-left-2 duration-200 lg:border-l lg:border-border">
         {/* Tab bar */}
         <div className="flex items-center border-b border-border shrink-0">
           <div className="flex flex-1">
@@ -2146,7 +2146,7 @@ export default function TrainingPanel({
 
   // When a training module is active, show tabs at the top
   return (
-    <div className="flex flex-col h-full border-l border-border bg-card animate-in fade-in slide-in-from-right-2 duration-200">
+    <div className="flex h-full flex-col bg-card animate-in fade-in slide-in-from-right-2 duration-200 lg:border-l lg:border-border">
       {/* Tab bar */}
       <div className="flex items-center border-b border-border shrink-0">
         <div className="flex flex-1">

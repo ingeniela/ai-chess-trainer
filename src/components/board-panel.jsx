@@ -144,6 +144,7 @@ const BoardPanel = ({
   isReviewMode = false,
   premove = null,
   onCancelPremove = null,
+  boardColors = { light: "#edeed1", dark: "#779952" },
 }) => {
   const containerReference = useRef(null);
   const [boardWidth, setBoardWidth] = useState(400);
@@ -162,8 +163,13 @@ const BoardPanel = ({
       if (containerReference.current) {
         const { width, height } =
           containerReference.current.getBoundingClientRect();
-        const maxSize = Math.min(width - 48, height - 120);
-        setBoardWidth(Math.max(280, Math.floor(maxSize)));
+        const horizontalPadding = width < 520 ? 16 : 48;
+        const verticalReserve = width < 520 ? 96 : 120;
+        const maxSize = Math.min(
+          width - horizontalPadding,
+          height - verticalReserve,
+        );
+        setBoardWidth(Math.max(260, Math.floor(maxSize)));
       }
     };
     updateSize();
@@ -228,7 +234,10 @@ const BoardPanel = ({
   // ── Compute legal moves for a square ──
   const getMoveOptions = useCallback(
     (square) => {
-      if (isReviewMode) return false;
+      if (isReviewMode || !square) return false;
+      const piece = game.get(square);
+      if (!piece || piece.color !== turn) return false;
+
       const moves = game.moves({ square, verbose: true });
       if (moves.length === 0) {
         setOptionSquares({});
@@ -253,7 +262,7 @@ const BoardPanel = ({
       setSelectedSquare(square);
       return true;
     },
-    [game, isReviewMode],
+    [game, isReviewMode, turn],
   );
 
   // ── Handle square click (click-to-move) ──
@@ -321,10 +330,21 @@ const BoardPanel = ({
   /**
    *
    */
-  const onPieceDrag = ({ sourceSquare }) => {
+  const onPieceDrag = ({ square }) => {
     if (isReviewMode) return;
-    getMoveOptions(sourceSquare);
+    getMoveOptions(square);
   };
+
+  const canDragPiece = useCallback(
+    ({ isSparePiece, square }) => {
+      if (isSparePiece || isGameOver || isAIThinking || isReviewMode) {
+        return false;
+      }
+      const piece = square ? game.get(square) : null;
+      return Boolean(piece && piece.color === turn);
+    },
+    [game, isAIThinking, isGameOver, isReviewMode, turn],
+  );
 
   // ── Handle drop ──
   /**
@@ -535,10 +555,10 @@ const BoardPanel = ({
             boardOrientation,
             animationDurationInMs: 200,
             allowDragging: !isGameOver && !isAIThinking && !isReviewMode,
-            canDragPiece: () => !isGameOver && !isAIThinking && !isReviewMode,
+            canDragPiece,
             boardStyle: { borderRadius: "0px" },
-            darkSquareStyle: { backgroundColor: "#779952" },
-            lightSquareStyle: { backgroundColor: "#edeed1" },
+            darkSquareStyle: { backgroundColor: boardColors.dark },
+            lightSquareStyle: { backgroundColor: boardColors.light },
             squareStyles,
             dropSquareStyle: { boxShadow: "inset 0 0 1px 6px rgba(0,0,0,.1)" },
             showNotation: true,

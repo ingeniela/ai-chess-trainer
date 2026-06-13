@@ -17,6 +17,19 @@ const formatSummarySourceMessages = (messages) =>
     })
     .join("\n\n");
 
+const getChatCompletionUrl = (provider = "openai") =>
+  provider === "openrouter"
+    ? "https://openrouter.ai/api/v1/chat/completions"
+    : "https://api.openai.com/v1/chat/completions";
+
+const getProviderHeaders = (provider = "openai") =>
+  provider === "openrouter"
+    ? {
+        "HTTP-Referer": globalThis.location?.origin || "http://localhost",
+        "X-OpenRouter-Title": "AI Chess Trainer",
+      }
+    : {};
+
 /**
  * Send a chat message to OpenAI and return the assistant's response text.
  */
@@ -25,6 +38,7 @@ export const sendChatMessage = async ({
   fen,
   apiKey,
   model = "gpt-4o-mini",
+  provider = "openai",
 }) => {
   if (!apiKey) {
     throw new Error("Please set your API key in Settings first.");
@@ -35,11 +49,12 @@ export const sendChatMessage = async ({
     content: `${SYSTEM_PROMPT}\n\nCurrent board position (FEN): ${fen}`,
   };
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetch(getChatCompletionUrl(provider), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      ...getProviderHeaders(provider),
     },
     body: JSON.stringify({
       model,
@@ -121,18 +136,20 @@ export const summarizeConversation = async ({
   existingSummary = "",
   apiKey,
   model = "gpt-4o-mini",
+  provider = "openai",
 }) => {
   if (!apiKey) {
-    throw new Error("Please set your OpenAI API key in Settings first.");
+    throw new Error("Please set your API key in Settings first.");
   }
 
   const sourceMessages = formatSummarySourceMessages(messages);
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetch(getChatCompletionUrl(provider), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      ...getProviderHeaders(provider),
     },
     body: JSON.stringify({
       model,
@@ -180,6 +197,7 @@ export const getGMThoughtProcess = async ({
   elo = 1000,
   apiKey,
   model = "gpt-4o-mini",
+  provider = "openai",
 }) => {
   if (!apiKey) {
     throw new Error("Please set your OpenAI API key in Settings first.");
@@ -254,11 +272,12 @@ Rules:
 - bestMove must be the first move of Stockfish line 1.
 - Return ONLY raw JSON, nothing else.`;
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  const response = await fetch(getChatCompletionUrl(provider), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      ...getProviderHeaders(provider),
     },
     body: JSON.stringify({
       model,

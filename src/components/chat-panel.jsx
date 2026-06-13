@@ -1182,7 +1182,7 @@ const ChatPanel = ({
     : null;
 
   return (
-    <div className="flex flex-col h-full border-l border-border bg-card">
+    <div className="flex h-full flex-col bg-card lg:border-l lg:border-border">
       {/* Glossary modal */}
       <GlossaryDialog
         open={glossaryOpen}
@@ -1229,7 +1229,7 @@ const ChatPanel = ({
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 space-y-3 overflow-y-auto p-3 lg:space-y-4 lg:p-4">
         {visibleMessages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             {activeTab === "engine" ? (
@@ -1287,7 +1287,7 @@ const ChatPanel = ({
 
       {/* Bottom action area */}
       {activeTab === "engine" ? (
-        <div className="p-3 border-t border-border space-y-2">
+        <div className="space-y-2 border-t border-border p-2 lg:p-3">
           <div className="grid grid-cols-3 gap-2">
             <Button
               variant="outline"

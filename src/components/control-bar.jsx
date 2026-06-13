@@ -129,16 +129,16 @@ const ControlBar = ({
   onToggleDarkMode,
   // Train
 }) => (
-  <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card gap-2 flex-wrap">
+  <div className="flex items-center gap-2 overflow-x-auto border-b border-border bg-card px-2 py-2 sm:px-4 lg:justify-between">
     {/* Left — branding */}
-    <div className="flex items-center gap-2 shrink-0">
-      <span className="text-base font-bold tracking-tight text-primary">
+    <div className="flex shrink-0 items-center gap-2">
+      <span className="whitespace-nowrap text-sm font-bold tracking-tight text-primary sm:text-base">
         ♟ Chess King
       </span>
     </div>
 
     {/* Center — controls */}
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex min-w-max items-center gap-2 lg:min-w-0 lg:flex-wrap">
       {/* Opponent selector */}
       <Dropdown
         label="Opponent"
@@ -170,7 +170,7 @@ const ControlBar = ({
           />
         )} */}
 
-      <div className="w-px h-4 bg-border mx-1" />
+      <div className="mx-1 h-4 w-px bg-border" />
 
       <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-secondary">
         <Zap
@@ -178,7 +178,7 @@ const ControlBar = ({
             isLiveMode ? "text-primary" : "text-muted-foreground"
           }`}
         />
-        <span className="text-xs text-muted-foreground">
+        <span className="hidden text-xs text-muted-foreground sm:inline">
           {isLiveMode ? "Live Mode" : "Training"}
         </span>
         <Switch checked={isLiveMode} onCheckedChange={onToggleLiveMode} />
@@ -212,7 +212,7 @@ const ControlBar = ({
     </div>
 
     {/* Right — dark mode + settings */}
-    <div className="flex items-center gap-1 shrink-0">
+    <div className="flex shrink-0 items-center gap-1">
       <Button
         variant="ghost"
         size="icon"
