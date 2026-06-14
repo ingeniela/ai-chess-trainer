@@ -8,6 +8,7 @@ import BoardVisionPanel from "@/components/board-vision-panel";
 import ChatPanel from "@/components/chat-panel";
 import ControlBar from "@/components/control-bar";
 import DailyRoutinePanel from "@/components/daily-routine-panel";
+import DatabasePanel from "@/components/database-panel";
 import EndgameMode from "@/components/endgame-mode";
 import GameReportDialog from "@/components/game-report-dialog";
 import ModeRail from "@/components/mode-rail";
@@ -16,7 +17,6 @@ import OpeningDrillMode from "@/components/opening-drill-mode";
 import OpeningStatsPanel from "@/components/opening-stats-panel";
 import PositionSetupDialog from "@/components/position-setup-dialog";
 import PuzzleMode from "@/components/puzzle-mode";
-import SavedGamesDialog from "@/components/saved-games-dialog";
 import SettingsDialog from "@/components/settings-dialog";
 import TrainingOpeningTutorialPanel from "@/components/training-opening-tutorial-panel";
 import TrainingPanel from "@/components/training-panel";
@@ -26,7 +26,7 @@ import useDarkMode from "@/hooks/use-dark-mode";
 import useEngineCoach from "@/hooks/use-engine-coach";
 import { getBotProfile } from "@/lib/bot-profiles";
 import { migrateMoveHistory } from "@/lib/chess-helpers";
-import { autoSave, loadAutoSave } from "@/lib/db";
+import { autoSave, loadAutoSave, saveGame } from "@/lib/db";
 import { getBestMove } from "@/lib/engine";
 import { recordOpeningResult, detectOpening } from "@/lib/opening-stats";
 import { OPENINGS } from "@/lib/openings";
@@ -56,6 +56,20 @@ const getTextApiKey = () =>
   localStorage.getItem("chess-ai-provider") === "openrouter"
     ? localStorage.getItem("chess-openrouter-api-key") || ""
     : getApiKey();
+
+const getGameResult = (game) => {
+  if (!game.isGameOver()) return null;
+  if (game.isDraw()) return "draw";
+  if (game.isCheckmate()) return game.turn() === "w" ? "black" : "white";
+  return "draw";
+};
+
+const getPlayerResult = (gameResult, playerColor) => {
+  if (!gameResult) return null;
+  if (gameResult === "draw") return "draw";
+  const playerSide = playerColor === "black" ? "black" : "white";
+  return gameResult === playerSide ? "win" : "loss";
+};
 
 const getStoredBoardColors = () => ({
   light: localStorage.getItem("chess-board-light") || "#edeed1",
@@ -299,8 +313,8 @@ const App = () => {
       : displayLastMoveSquares;
 
   const aiTimeoutReference = useRef(null);
-  const [savedGamesOpen, setSavedGamesOpen] = useState(false);
   const autoSaveTimerReference = useRef(null);
+  const completedGameSaveReference = useRef(null);
   const [positionSetupOpen, setPositionSetupOpen] = useState(false);
 
   // ── Game report ──────────────────────────────────────────────────────────
@@ -527,6 +541,47 @@ const App = () => {
     }, 500);
   }, [fen, moveHistory]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const game = gameReference.current;
+    if (!game.isGameOver() || moveHistory.length === 0) return;
+
+    const pgn = game.pgn();
+    if (!pgn || completedGameSaveReference.current === pgn) return;
+
+    const gameResult = getGameResult(game);
+    const playerResult =
+      opponent === "manual" ? null : getPlayerResult(gameResult, playerColor);
+    const label =
+      playerResult === "win"
+        ? "Win"
+        : playerResult === "loss"
+          ? "Loss"
+          : gameResult === "draw"
+            ? "Draw"
+            : gameResult === "white"
+              ? "White won"
+              : "Black won";
+
+    completedGameSaveReference.current = pgn;
+    saveGame({
+      fen: game.fen(),
+      pgn,
+      moveHistory,
+      opponent,
+      difficulty,
+      boardOrientation,
+      playerColor,
+      gameResult,
+      playerResult,
+      name: `${label} · ${moveHistory.length} moves · ${new Date().toLocaleDateString()}`,
+      completedAt: Date.now(),
+      isAutomaticRecord: true,
+    }).catch((error) => {
+      completedGameSaveReference.current = null;
+      console.error("Failed to save completed game:", error);
+    });
+  }, [boardOrientation, difficulty, fen, moveHistory, opponent, playerColor]);
+
   // ── Load a saved game ────────────────────────────────────────────────────
   const handleLoadGame = useCallback(
     (saved) => {
@@ -536,6 +591,9 @@ const App = () => {
         const game = new Chess();
         if (saved.pgn) game.loadPgn(saved.pgn);
         else if (saved.fen) game.load(saved.fen);
+        completedGameSaveReference.current = game.isGameOver()
+          ? game.pgn()
+          : null;
         gameReference.current = game;
         setFen(game.fen());
         setMoveHistory(migrateMoveHistory(saved.moveHistory || []));
@@ -577,20 +635,6 @@ const App = () => {
       }
     },
     [applyEvalScore, isAnalyzingRef],
-  );
-
-  // ── Get snapshot for saving ──────────────────────────────────────────────
-  const getCurrentSnapshot = useCallback(
-    () => ({
-      fen: gameReference.current.fen(),
-      pgn: gameReference.current.pgn(),
-      moveHistory,
-      opponent,
-      difficulty,
-      boardOrientation,
-      playerColor,
-    }),
-    [moveHistory, opponent, difficulty, boardOrientation, playerColor],
   );
 
   // ── Trigger AI/engine opponent move ──────────────────────────────────────
@@ -1132,6 +1176,7 @@ const App = () => {
   const handleNewGame = useCallback(() => {
     clearTimeout(aiTimeoutReference.current);
     destroyStockfishEngine();
+    completedGameSaveReference.current = null;
     gameReference.current = new Chess();
     setFen(gameReference.current.fen());
     setMoveHistory([]);
@@ -1172,6 +1217,7 @@ const App = () => {
           if (type === "fen") g.load(loadFen);
           else if (type === "pgn") g.loadPgn(pgn);
         }
+        completedGameSaveReference.current = g.isGameOver() ? g.pgn() : null;
         gameReference.current = g;
         setFen(g.fen());
         const hist = g.history({ verbose: true });
@@ -1390,7 +1436,6 @@ const App = () => {
     <div className="flex flex-col h-screen">
       <ControlBar
         onNewGame={handleNewGame}
-        onOpenSavedGames={() => setSavedGamesOpen(true)}
         opponent={opponent}
         onOpponentChange={setOpponent}
         difficulty={difficulty}
@@ -1487,6 +1532,12 @@ const App = () => {
                   onNext={nextVisionCard}
                   onReset={resetVisionDrill}
                 />
+              ) : activeMode === "database" ? (
+                <DatabasePanel
+                  onLoadGame={handleLoadGame}
+                  onPreviewPosition={handlePreviewPosition}
+                  onClearPreview={handleClearPreviewLine}
+                />
               ) : activeMode === "training" ? (
                 <TrainingPanel
                   initialModule={trainingInitialModule}
@@ -1559,13 +1610,6 @@ const App = () => {
         open={positionSetupOpen}
         onOpenChange={setPositionSetupOpen}
         onLoadPosition={handleLoadPosition}
-      />
-
-      <SavedGamesDialog
-        open={savedGamesOpen}
-        onClose={() => setSavedGamesOpen(false)}
-        onLoadGame={handleLoadGame}
-        currentGameSnapshot={getCurrentSnapshot()}
       />
 
       {puzzleOpen && <PuzzleMode onClose={() => setPuzzleOpen(false)} />}

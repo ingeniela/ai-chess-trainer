@@ -1,11 +1,4 @@
-import {
-  RotateCcw,
-  User,
-  Bot,
-  Cpu,
-  ChevronDown,
-  FolderOpen,
-} from "lucide-react";
+import { RotateCcw, User, Bot, Cpu, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 
@@ -151,7 +144,6 @@ const BOT_OPTIONS = BOT_PROFILES.map((profile) => ({
  */
 const ControlBar = ({
   onNewGame,
-  onOpenSavedGames,
   opponent,
   onOpponentChange,
   difficulty,
@@ -159,13 +151,6 @@ const ControlBar = ({
   // Train
 }) => (
   <div className="relative z-30 flex items-center gap-2 overflow-x-auto overflow-y-visible border-b border-border bg-card px-2 py-2 sm:px-4 lg:justify-between">
-    {/* Left — branding */}
-    <div className="flex shrink-0 items-center gap-2">
-      <span className="whitespace-nowrap text-sm font-bold tracking-tight text-primary sm:text-base">
-        Ai Chess Trainer
-      </span>
-    </div>
-
     {/* Center — controls */}
     <div className="flex min-w-max items-center gap-2 lg:min-w-0 lg:flex-wrap">
       {/* Opponent selector */}
@@ -204,11 +189,6 @@ const ControlBar = ({
         New Game
       </Button>
 
-      <Button variant="ghost" size="sm" onClick={onOpenSavedGames}>
-        <FolderOpen className="h-4 w-4" />
-        Save / Load
-      </Button>
-
       {/* <Button variant="ghost" size="sm" onClick={onSetPosition}>
         <LayoutGrid className="h-4 w-4" />
         Set Position
@@ -232,4 +212,3 @@ const ControlBar = ({
 );
 
 export default ControlBar;
-

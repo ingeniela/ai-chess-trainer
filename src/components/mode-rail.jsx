@@ -3,6 +3,7 @@ import {
   CalendarCheck,
   ChevronsLeft,
   ChevronsRight,
+  Database,
   Gamepad2,
   GraduationCap,
   ScanEye,
@@ -34,6 +35,11 @@ const MODES = [
     icon: BookOpenCheck,
   },
   {
+    id: "database",
+    label: "Database",
+    icon: Database,
+  },
+  {
     id: "vision",
     label: "Vision",
     icon: ScanEye,
@@ -61,14 +67,6 @@ const ModeRail = ({
         <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm">
           <Bot className="h-4 w-4" />
         </span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-bold leading-4 tracking-normal">
-            Ai Chess Trainer
-          </p>
-          <p className="truncate text-[11px] font-medium leading-4 text-muted-foreground">
-            Chess coach
-          </p>
-        </div>
       </div>
       <button
         type="button"
