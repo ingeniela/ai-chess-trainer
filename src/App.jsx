@@ -125,6 +125,7 @@ const App = () => {
   const [messages, setMessages] = useState(getStoredMessages);
   const [moveHistory, setMoveHistory] = useState([]); // { san, fen, from, to }[]
   const [redoHistory, setRedoHistory] = useState([]);
+  const [manualGameEnded, setManualGameEnded] = useState(false);
   const [viewIndex, setViewIndex] = useState(null);
   const [previewMoveIndex, setPreviewMoveIndex] = useState(null);
   const viewIndexReference = useRef(null);
@@ -489,6 +490,7 @@ const App = () => {
           gameReference.current = game;
           setFen(game.fen());
           setMoveHistory(migrateMoveHistory(saved.moveHistory));
+          setManualGameEnded(false);
           setRedoHistory([]);
           if (saved.boardOrientation) {
             setBoardOrientation(saved.boardOrientation);
@@ -598,6 +600,7 @@ const App = () => {
         setFen(game.fen());
         const loadedHistory = migrateMoveHistory(saved.moveHistory || []);
         setMoveHistory(loadedHistory);
+        setManualGameEnded(Boolean(saved.isManualEnd));
         setRedoHistory([]);
         setMoveQuality(null);
         setMessages([]);
@@ -969,6 +972,7 @@ const App = () => {
       );
 
       if (viewIndexReference.current !== null) return false;
+      if (manualGameEnded) return false;
 
       // Queue if not player's turn
       if (
@@ -1108,6 +1112,7 @@ const App = () => {
     [
       isLiveMode,
       coachMode,
+      manualGameEnded,
       moveHistory,
       opponent,
       triggerAIMove,
@@ -1190,6 +1195,7 @@ const App = () => {
     clearTimeout(aiTimeoutReference.current);
     destroyStockfishEngine();
     completedGameSaveReference.current = null;
+    setManualGameEnded(false);
     gameReference.current = new Chess();
     setFen(gameReference.current.fen());
     setMoveHistory([]);
@@ -1219,6 +1225,46 @@ const App = () => {
     }
   }, [opponent, triggerAIMove, isAnalyzingRef]);
 
+  const handleEndGame = useCallback(() => {
+    if (moveHistory.length === 0 || gameReference.current.isGameOver()) return;
+
+    clearTimeout(aiTimeoutReference.current);
+    setIsAIThinking(false);
+    setManualGameEnded(true);
+    setIsLiveMode(false);
+
+    const game = gameReference.current;
+    const pgn = game.pgn();
+    completedGameSaveReference.current = `manual:${pgn}`;
+    saveGame({
+      fen: game.fen(),
+      pgn,
+      moveHistory,
+      opponent,
+      difficulty,
+      boardOrientation,
+      playerColor,
+      gameResult: "ended",
+      playerResult: null,
+      name: `Ended · ${moveHistory.length} moves · ${new Date().toLocaleDateString()}`,
+      completedAt: Date.now(),
+      isManualEnd: true,
+      isAutomaticRecord: true,
+    }).catch((error) => {
+      completedGameSaveReference.current = null;
+      console.error("Failed to save ended game:", error);
+    });
+
+    triggerPostGameAnalysis(moveHistory);
+  }, [
+    boardOrientation,
+    difficulty,
+    moveHistory,
+    opponent,
+    playerColor,
+    triggerPostGameAnalysis,
+  ]);
+
   // ── Load position from FEN/PGN ───────────────────────────────────────────
   const handleLoadPosition = useCallback(
     ({ type, fen: loadFen, pgn, game: loadedGame }) => {
@@ -1231,6 +1277,7 @@ const App = () => {
           else if (type === "pgn") g.loadPgn(pgn);
         }
         completedGameSaveReference.current = g.isGameOver() ? g.pgn() : null;
+        setManualGameEnded(false);
         gameReference.current = g;
         setFen(g.fen());
         const hist = g.history({ verbose: true });
@@ -1371,6 +1418,7 @@ const App = () => {
         activeMode === "play" &&
         mode !== "play" &&
         moveHistory.length > 0 &&
+        !manualGameEnded &&
         !gameReference.current.isGameOver();
 
       if (
@@ -1393,7 +1441,7 @@ const App = () => {
       setPuzzleOpen(false);
       setTrainingInitialModule(null);
     },
-    [activeMode, moveHistory.length],
+    [activeMode, manualGameEnded, moveHistory.length],
   );
 
   const handleStartRoutineTask = useCallback((target) => {
@@ -1467,6 +1515,12 @@ const App = () => {
     <div className="flex flex-col h-screen">
       <ControlBar
         onNewGame={handleNewGame}
+        onEndGame={handleEndGame}
+        canEndGame={
+          moveHistory.length > 0 &&
+          !gameReference.current.isGameOver() &&
+          !manualGameEnded
+        }
         opponent={opponent}
         onOpponentChange={setOpponent}
         difficulty={difficulty}

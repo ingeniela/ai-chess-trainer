@@ -63,6 +63,7 @@ const resultLabel = (game) => {
   if (game.playerResult === "win") return "Win";
   if (game.playerResult === "loss") return "Loss";
   if (game.playerResult === "draw") return "Draw";
+  if (game.gameResult === "ended") return "Ended";
   if (game.gameResult === "white") return "White won";
   if (game.gameResult === "black") return "Black won";
   if (game.gameResult === "draw") return "Draw";
@@ -78,6 +79,9 @@ const resultClass = (game) => {
   }
   if (game.playerResult === "draw") {
     return "border-yellow-500/30 bg-yellow-500/10 text-yellow-400";
+  }
+  if (game.gameResult === "ended") {
+    return "border-cyan-500/30 bg-cyan-500/10 text-cyan-400";
   }
   return "border-border bg-muted/30 text-muted-foreground";
 };

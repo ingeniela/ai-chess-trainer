@@ -1,4 +1,4 @@
-import { RotateCcw, User, Bot, Cpu, ChevronDown } from "lucide-react";
+import { Flag, RotateCcw, User, Bot, Cpu, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 
@@ -144,6 +144,8 @@ const BOT_OPTIONS = BOT_PROFILES.map((profile) => ({
  */
 const ControlBar = ({
   onNewGame,
+  onEndGame,
+  canEndGame = false,
   opponent,
   onOpponentChange,
   difficulty,
@@ -187,6 +189,16 @@ const ControlBar = ({
       <Button variant="ghost" size="sm" onClick={onNewGame}>
         <RotateCcw className="h-4 w-4" />
         New Game
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onEndGame}
+        disabled={!canEndGame}
+      >
+        <Flag className="h-4 w-4" />
+        End Game
       </Button>
 
       {/* <Button variant="ghost" size="sm" onClick={onSetPosition}>
