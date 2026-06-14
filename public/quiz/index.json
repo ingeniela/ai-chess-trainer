@@ -484,6 +484,226 @@
       "moveCount": 3,
       "turn": "black",
       "file": "/quiz/h10.json"
+    },
+    {
+      "id": "n01",
+      "kind": "quiz",
+      "title": "Back Rank Entry",
+      "theme": "back-rank",
+      "difficulty": "easy",
+      "description": "White to move - use the open file to punish the trapped king.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n01.json"
+    },
+    {
+      "id": "n02",
+      "kind": "quiz",
+      "title": "Corner Queen Mate",
+      "theme": "checkmate",
+      "difficulty": "easy",
+      "description": "White to move - the queen has one clean back-rank checkmate.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n02.json"
+    },
+    {
+      "id": "n03",
+      "kind": "quiz",
+      "title": "Rook Side Swipe",
+      "theme": "checkmate",
+      "difficulty": "easy",
+      "description": "White to move - swing the rook to the back rank.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n03.json"
+    },
+    {
+      "id": "n04",
+      "kind": "quiz",
+      "title": "Knight Royal Fork",
+      "theme": "fork",
+      "difficulty": "easy",
+      "description": "White to move - jump with tempo and attack king and queen.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n04.json"
+    },
+    {
+      "id": "n05",
+      "kind": "quiz",
+      "title": "Bishop Skewer",
+      "theme": "skewer",
+      "difficulty": "easy",
+      "description": "White to move - check first, then the rook behind the king falls.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n05.json"
+    },
+    {
+      "id": "n06",
+      "kind": "quiz",
+      "title": "Loose Queen",
+      "theme": "fork",
+      "difficulty": "easy",
+      "description": "White to move - the knight fork wins the unprotected queen.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n06.json"
+    },
+    {
+      "id": "n07",
+      "kind": "quiz",
+      "title": "Queen Back Rank",
+      "theme": "back-rank",
+      "difficulty": "easy",
+      "description": "White to move - queen and back-rank weakness decide the game.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n07.json"
+    },
+    {
+      "id": "n08",
+      "kind": "quiz",
+      "title": "King Net",
+      "theme": "checkmate",
+      "difficulty": "easy",
+      "description": "White to move - the queen steps in front and leaves no escape.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n08.json"
+    },
+    {
+      "id": "n09",
+      "kind": "quiz",
+      "title": "Discovered Rook Attack",
+      "theme": "discovered",
+      "difficulty": "medium",
+      "description": "White to move - move the knight with check and uncover pressure on the queen.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n09.json"
+    },
+    {
+      "id": "n10",
+      "kind": "quiz",
+      "title": "Deflect the Defender",
+      "theme": "deflection",
+      "difficulty": "medium",
+      "description": "White to move - force the rook away and crash through.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n10.json"
+    },
+    {
+      "id": "n11",
+      "kind": "quiz",
+      "title": "Queen Fork Check",
+      "theme": "fork",
+      "difficulty": "medium",
+      "description": "White to move - check the king while attacking the rook.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n11.json"
+    },
+    {
+      "id": "n12",
+      "kind": "quiz",
+      "title": "Pin the Queen",
+      "theme": "pin",
+      "difficulty": "medium",
+      "description": "White to move - put the rook on the file and pin the queen to the king.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n12.json"
+    },
+    {
+      "id": "n13",
+      "kind": "quiz",
+      "title": "Promotion With Check",
+      "theme": "promotion",
+      "difficulty": "medium",
+      "description": "White to move - promote with check and make the new queen count.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n13.json"
+    },
+    {
+      "id": "n14",
+      "kind": "quiz",
+      "title": "Knight Fork From Center",
+      "theme": "fork",
+      "difficulty": "medium",
+      "description": "White to move - use the centralized knight to fork king and queen.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n14.json"
+    },
+    {
+      "id": "n15",
+      "kind": "quiz",
+      "title": "Back Rank Deflection",
+      "theme": "back-rank",
+      "difficulty": "medium",
+      "description": "White to move - the defender cannot handle the back-rank threat.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n15.json"
+    },
+    {
+      "id": "n16",
+      "kind": "quiz",
+      "title": "Rook Skewer",
+      "theme": "skewer",
+      "difficulty": "hard",
+      "description": "White to move - force the king's response and expose the queen.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n16.json"
+    },
+    {
+      "id": "n17",
+      "kind": "quiz",
+      "title": "Long Diagonal Mate",
+      "theme": "checkmate",
+      "difficulty": "hard",
+      "description": "White to move - find the quiet bishop retreat that seals the diagonal.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n17.json"
+    },
+    {
+      "id": "n18",
+      "kind": "quiz",
+      "title": "Queen X-Ray",
+      "theme": "discovered",
+      "difficulty": "hard",
+      "description": "White to move - use the queen's line to create an x-ray attack.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n18.json"
+    },
+    {
+      "id": "n19",
+      "kind": "quiz",
+      "title": "Final Rank Break",
+      "theme": "back-rank",
+      "difficulty": "hard",
+      "description": "White to move - the rook reaches the back rank from the corner.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n19.json"
+    },
+    {
+      "id": "n20",
+      "kind": "quiz",
+      "title": "Promotion Race Tactic",
+      "theme": "promotion",
+      "difficulty": "hard",
+      "description": "White to move - promote before Black can organize counterplay.",
+      "moveCount": 1,
+      "turn": "white",
+      "file": "/quiz/n20.json"
     }
   ]
 }

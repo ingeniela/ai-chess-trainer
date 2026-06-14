@@ -1,0 +1,10 @@
+{
+  "kind": "quiz",
+  "id": "n06",
+  "title": "Loose Queen",
+  "fen": "8/7q/4k3/8/8/5N2/8/4K3 w - - 0 1",
+  "solution": ["f3g5"],
+  "theme": "fork",
+  "difficulty": "easy",
+  "description": "White to move - the knight fork wins the unprotected queen."
+}

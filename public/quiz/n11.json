@@ -1,0 +1,10 @@
+{
+  "kind": "quiz",
+  "id": "n11",
+  "title": "Queen Fork Check",
+  "fen": "4k3/8/8/7r/8/8/3Q4/4K3 w - - 0 1",
+  "solution": ["d2e2"],
+  "theme": "fork",
+  "difficulty": "medium",
+  "description": "White to move - check the king while attacking the rook."
+}

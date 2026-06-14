@@ -1,0 +1,10 @@
+{
+  "kind": "quiz",
+  "id": "n12",
+  "title": "Pin the Queen",
+  "fen": "4k3/4q3/8/8/8/8/8/R5K1 w - - 0 1",
+  "solution": ["a1e1"],
+  "theme": "pin",
+  "difficulty": "medium",
+  "description": "White to move - put the rook on the file and pin the queen to the king."
+}

@@ -74,6 +74,19 @@ const Badge = ({ label, className }) => (
   </span>
 );
 
+const buildMoveFromUci = (uci) => {
+  const move = {
+    from: uci.slice(0, 2),
+    to: uci.slice(2, 4),
+  };
+
+  if (uci[4]) {
+    move.promotion = uci[4];
+  }
+
+  return move;
+};
+
 const TrainingPuzzleQuizPanel = ({
   onBoardUpdate,
   onRegisterMoveHandler,
@@ -209,11 +222,7 @@ const TrainingPuzzleQuizPanel = ({
       const uci = quiz.solution[step];
       engineTimerReference.current = setTimeout(() => {
         try {
-          const move = game.move({
-            from: uci.slice(0, 2),
-            to: uci.slice(2, 4),
-            promotion: uci[4] || "q",
-          });
+          const move = game.move(buildMoveFromUci(uci));
           if (!move) return;
 
           const nextStep = step + 1;
@@ -259,7 +268,11 @@ const TrainingPuzzleQuizPanel = ({
       if (!expectedUci) return false;
 
       try {
-        const move = game.move({ from, to, promotion: expectedUci[4] || "q" });
+        const move = game.move({
+          from,
+          to,
+          ...(expectedUci[4] ? { promotion: expectedUci[4] } : {}),
+        });
         if (!move) return false;
 
         if (
@@ -381,6 +394,14 @@ const TrainingPuzzleQuizPanel = ({
       (entry) => entry.id === selectedEntry.id,
     );
     const nextEntry = catalog[(currentIndex + 1) % catalog.length];
+    openQuiz(nextEntry);
+  };
+
+  const handleNewChallenge = () => {
+    if (!catalog.length) return;
+    const choices = catalog.filter((entry) => entry.id !== selectedEntry?.id);
+    const pool = choices.length > 0 ? choices : catalog;
+    const nextEntry = pool[Math.floor(Math.random() * pool.length)];
     openQuiz(nextEntry);
   };
 
@@ -727,12 +748,21 @@ const TrainingPuzzleQuizPanel = ({
           <Button
             size="sm"
             className="flex-1 text-xs h-7"
-            onClick={handleNextQuiz}
+            onClick={handleNewChallenge}
           >
-            Next
-            <ChevronRight className="h-3 w-3 ml-1" />
+            New Challenge
+            <Puzzle className="h-3 w-3 ml-1" />
           </Button>
         </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full text-xs h-7"
+          onClick={handleNextQuiz}
+        >
+          Next in Library
+          <ChevronRight className="h-3 w-3 ml-1" />
+        </Button>
       </div>
     </div>
   );

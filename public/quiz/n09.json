@@ -1,0 +1,10 @@
+{
+  "kind": "quiz",
+  "id": "n09",
+  "title": "Discovered Rook Attack",
+  "fen": "4k2q/8/8/8/4R3/8/4N3/4K3 w - - 0 1",
+  "solution": ["e2g3"],
+  "theme": "discovered",
+  "difficulty": "medium",
+  "description": "White to move - move the knight with check and uncover pressure on the queen."
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "quiz",
+  "id": "n16",
+  "title": "Rook Skewer",
+  "fen": "4k3/4q3/8/8/8/8/8/R5K1 w - - 0 1",
+  "solution": ["a1e1"],
+  "theme": "skewer",
+  "difficulty": "hard",
+  "description": "White to move - force the king's response and expose the queen."
+}
