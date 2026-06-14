@@ -1,12 +1,16 @@
 import {
   BarChart3,
-  CalendarCheck,
+  Brain,
   CheckCircle2,
-  Circle,
-  ExternalLink,
   Flame,
   ListChecks,
+  Play,
   RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  Swords,
+  Target,
+  Trophy,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -18,39 +22,43 @@ const STORAGE_KEY = "chess-daily-routine-progress";
 const TASKS = [
   {
     id: "warmup",
-    title: "Warm-up",
-    duration: "5 mins",
-    action: "Start Board Vision",
+    title: "Scout the Board",
+    duration: "5 min",
+    xp: 50,
+    action: "Start Vision",
     target: "vision",
-    detail:
-      "Do basic tactical puzzles or a board vision coordinate drill to activate your brain.",
+    icon: Target,
+    detail: "Hit a quick coordinate drill and wake up your board vision.",
   },
   {
     id: "tactics",
-    title: "Targeted Tactics",
-    duration: "15 mins",
-    action: "Open Puzzles",
+    title: "Tactics Dungeon",
+    duration: "15 min",
+    xp: 150,
+    action: "Enter Quizzes",
     target: "tactics",
-    detail:
-      "Solve puzzles slowly. Do not move until you calculate the full sequence in your head.",
+    icon: Swords,
+    detail: "Solve slowly. Calculate the full line before making a move.",
   },
   {
     id: "game",
-    title: "Play One Meaningful Game",
-    duration: "15 mins",
-    action: "Go to Play",
+    title: "Ranked Battle",
+    duration: "15 min",
+    xp: 150,
+    action: "Play Game",
     target: "play",
-    detail:
-      "Play one rapid game, 10 to 15 minutes per side. Avoid blitz and bullet for improvement work.",
+    icon: ShieldCheck,
+    detail: "Play one meaningful game. Avoid blitz habits and make plans.",
   },
   {
     id: "review",
-    title: "AI Game Review",
-    duration: "10 mins",
-    action: "Open Engine Review",
+    title: "Boss Review",
+    duration: "10 min",
+    xp: 100,
+    action: "Review Game",
     target: "review",
-    detail:
-      "Review the game, find the single most instructive moment, and write it down.",
+    icon: Brain,
+    detail: "Find the single move that taught you the most today.",
   },
 ];
 
@@ -58,7 +66,7 @@ const todayKey = () => new Date().toISOString().slice(0, 10);
 
 const formatDay = (dateKey) =>
   new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
+    weekday: "long",
     month: "short",
     day: "numeric",
   }).format(new Date(`${dateKey}T12:00:00`));
@@ -75,7 +83,7 @@ const readProgress = () => {
 const getRecentDays = (count = 7) => {
   const days = [];
   const now = new Date();
-  for (let offset = count - 1; offset >= 0; offset--) {
+  for (let offset = count - 1; offset >= 0; offset -= 1) {
     const date = new Date(now);
     date.setDate(now.getDate() - offset);
     days.push(date.toISOString().slice(0, 10));
@@ -87,8 +95,12 @@ const DailyRoutinePanel = ({ onStartTask }) => {
   const [progress, setProgress] = useState(readProgress);
   const currentDay = todayKey();
   const todayProgress = progress[currentDay] || {};
-  const completedCount = TASKS.filter((task) => todayProgress[task.id]).length;
-  const percent = Math.round((completedCount / TASKS.length) * 100);
+  const completedTasks = TASKS.filter((task) => todayProgress[task.id]);
+  const completedCount = completedTasks.length;
+  const totalXp = TASKS.reduce((sum, task) => sum + task.xp, 0);
+  const earnedXp = completedTasks.reduce((sum, task) => sum + task.xp, 0);
+  const percent = Math.round((earnedXp / totalXp) * 100);
+  const level = Math.max(1, Math.floor(earnedXp / 100) + 1);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
@@ -114,138 +126,168 @@ const DailyRoutinePanel = ({ onStartTask }) => {
   };
 
   return (
-    <div className="flex h-full flex-col bg-card">
-      <div className="border-b border-border px-4 py-4">
-        <div className="flex items-center gap-2">
-          <CalendarCheck className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold">Daily Routine</h2>
-        </div>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          A simple improvement loop: warm up, calculate, play slowly, then
-          review one instructive moment.
-        </p>
-      </div>
-
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
-        <div className="rounded-md border border-border bg-secondary/30 px-3 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-semibold uppercase text-muted-foreground">
-                Today
-              </p>
-              <p className="text-sm font-semibold">{formatDay(currentDay)}</p>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      <div className="border-b border-border bg-secondary/30 px-4 py-4 sm:px-5">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-md border border-primary/30 bg-primary/10 text-primary">
+            <Trophy className="h-5 w-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-lg font-black tracking-normal">
+                Daily Quest
+              </h2>
+              <span className="rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-500">
+                Level {level}
+              </span>
             </div>
-            <div className="text-right">
-              <p className="text-2xl font-black tabular-nums">{percent}%</p>
-              <p className="text-[11px] text-muted-foreground">
-                {completedCount}/{TASKS.length} done
-              </p>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              {formatDay(currentDay)}
+            </p>
           </div>
-          <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+          <div className="rounded-md border border-border bg-card px-3 py-2 text-right">
+            <p className="text-2xl font-black tabular-nums">{earnedXp}</p>
+            <p className="text-[10px] font-semibold uppercase text-muted-foreground">
+              XP earned
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <div className="mb-1.5 flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+            <span>Quest progress</span>
+            <span>
+              {completedCount}/{TASKS.length} missions
+            </span>
+          </div>
+          <div className="h-3 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full bg-primary transition-all"
               style={{ width: `${percent}%` }}
             />
           </div>
         </div>
+      </div>
 
-        <div className="space-y-2">
+      <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5">
+        <div className="grid gap-3 lg:grid-cols-2">
           {TASKS.map((task) => {
             const done = Boolean(todayProgress[task.id]);
+            const Icon = task.icon;
             return (
               <div
                 key={task.id}
-                className={`rounded-md border px-3 py-3 transition-colors ${
+                className={`rounded-lg border p-4 transition-colors ${
                   done
                     ? "border-emerald-500/35 bg-emerald-500/10"
-                    : "border-border bg-card"
+                    : "border-border bg-card hover:bg-secondary/20"
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={done}
-                    onCheckedChange={() => toggleTask(task.id)}
-                    className="mt-0.5"
-                  />
+                  <span
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md border ${
+                      done
+                        ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-500"
+                        : "border-primary/25 bg-primary/10 text-primary"
+                    }`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold">{task.title}</p>
-                      <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                        {task.duration}
-                      </span>
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold">
+                          {task.title}
+                        </p>
+                        <p className="text-[11px] font-semibold text-muted-foreground">
+                          {task.duration} · {task.xp} XP
+                        </p>
+                      </div>
+                      <Checkbox
+                        checked={done}
+                        onCheckedChange={() => toggleTask(task.id)}
+                      />
                     </div>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
                       {task.detail}
                     </p>
-                    <button
-                      type="button"
+                    <Button
+                      size="sm"
+                      variant={done ? "outline" : "default"}
+                      className="mt-3 h-8 text-xs"
                       onClick={() => onStartTask?.(task.target)}
-                      className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                     >
+                      {done ? (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      ) : (
+                        <Play className="h-3.5 w-3.5" />
+                      )}
                       {task.action}
-                      <ExternalLink className="h-3 w-3" />
-                    </button>
+                    </Button>
                   </div>
-                  {done ? (
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
-                  ) : (
-                    <Circle className="h-4 w-4 shrink-0 text-muted-foreground/50" />
-                  )}
                 </div>
               </div>
             );
           })}
         </div>
 
-        <div className="rounded-md border border-border px-3 py-3">
-          <div className="mb-3 flex items-center gap-2">
-            <BarChart3 className="h-4 w-4 text-primary" />
-            <p className="text-sm font-semibold">Last 7 days</p>
-          </div>
-          <div className="grid grid-cols-7 gap-1.5">
-            {recentDays.map((day) => {
-              const count = TASKS.filter((task) => progress[day]?.[task.id])
-                .length;
-              const dayPercent = Math.round((count / TASKS.length) * 100);
-              return (
-                <div key={day} className="text-center">
-                  <div className="flex h-16 items-end rounded bg-secondary/40 px-1">
-                    <div
-                      className="w-full rounded-sm bg-primary/80"
-                      style={{ height: `${Math.max(8, dayPercent)}%` }}
-                      title={`${formatDay(day)}: ${count}/${TASKS.length}`}
-                    />
+        <div className="mt-3 grid gap-3 xl:grid-cols-[1fr_320px]">
+          <div className="rounded-lg border border-border bg-secondary/20 p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-primary" />
+              <p className="text-sm font-bold">Streak Map</p>
+            </div>
+            <div className="grid grid-cols-7 gap-2">
+              {recentDays.map((day) => {
+                const count = TASKS.filter(
+                  (task) => progress[day]?.[task.id],
+                ).length;
+                const dayPercent = Math.round((count / TASKS.length) * 100);
+                return (
+                  <div key={day} className="text-center">
+                    <div className="flex h-20 items-end rounded-md border border-border bg-card px-1.5 py-1.5">
+                      <div
+                        className="w-full rounded-sm bg-primary"
+                        style={{ height: `${Math.max(8, dayPercent)}%` }}
+                        title={`${formatDay(day)}: ${count}/${TASKS.length}`}
+                      />
+                    </div>
+                    <p className="mt-1 text-[10px] font-semibold text-muted-foreground">
+                      {formatDay(day).slice(0, 3)}
+                    </p>
                   </div>
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    {formatDay(day).split(" ")[0]}
-                  </p>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-3">
-          <div className="flex items-center gap-2">
-            <Flame className="h-4 w-4 text-amber-500" />
-            <p className="text-sm font-semibold">Rule for today</p>
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
+            <div className="flex items-center gap-2">
+              <Flame className="h-4 w-4 text-amber-500" />
+              <p className="text-sm font-bold">Daily Rule</p>
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              Before every tactic, name the candidate moves first. Then move
+              only after you can explain the full line.
+            </p>
+            <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="text-xs font-semibold">
+                Finish all missions to complete today&apos;s quest.
+              </span>
+            </div>
           </div>
-          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-            For tactics, calculate the full line before touching the board.
-            Accuracy matters more than speed.
-          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 border-t border-border p-3">
+      <div className="grid grid-cols-2 gap-2 border-t border-border bg-card p-3">
         <Button variant="outline" onClick={resetToday}>
           <RotateCcw className="h-4 w-4" />
-          Reset
+          Reset Quest
         </Button>
         <Button onClick={() => onStartTask?.("vision")}>
           <ListChecks className="h-4 w-4" />
-          Start
+          Start Quest
         </Button>
       </div>
     </div>

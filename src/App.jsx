@@ -1470,121 +1470,127 @@ const App = () => {
           onToggleCollapsed={() => setModeRailCollapsed((value) => !value)}
         />
 
-        <div className="flex min-h-[360px] items-center justify-center overflow-hidden bg-background p-2 sm:min-h-[520px] sm:p-3 lg:min-h-0 lg:p-4">
-          <BoardPanel
-            game={displayBoardGame}
-            onMove={handleMove}
-            lastMoveSquares={displayBoardLastMove}
-            isAIThinking={isAIThinking && !trainingBoard.isTrainingActive}
-            boardOrientation={displayBoardOrientation}
-            isReviewMode={
-              effectiveViewIndex !== null && !trainingBoard.isTrainingActive
-            }
-            arrows={displayBoardArrows}
-            previewSquares={displayPreviewSquares}
-            onSquareSelect={
-              activeMode === "vision" ? handleVisionSquareSelect : null
-            }
-            hideHud={activeMode === "vision"}
-            hideStatus={activeMode === "vision"}
-            premove={premove}
-            playerColor={playerColor}
-            onPlayerColorChange={handlePlayerColorChange}
-            isGameInProgress={moveHistory.length > 0}
-            onCancelPremove={() => {
-              setPremove(null);
-              premoveReference.current = null;
-            }}
-            boardColors={boardColors}
-          />
-        </div>
-
-        <div className="relative min-h-0 min-w-0 border-t border-border bg-card lg:border-l lg:border-t-0">
-          {rightSidebarCollapsed ? (
-            <div className="flex h-full items-start justify-center pt-3">
-              <button
-                onClick={() => setRightSidebarCollapsed(false)}
-                className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-secondary"
-                title="Open right sidebar"
-              >
-                Open
-              </button>
+        {activeMode === "daily" ? (
+          <div className="min-h-[620px] overflow-hidden bg-background p-2 sm:p-3 lg:col-span-2 lg:min-h-0 lg:p-4">
+            <DailyRoutinePanel onStartTask={handleStartRoutineTask} />
+          </div>
+        ) : (
+          <>
+            <div className="flex min-h-[360px] items-center justify-center overflow-hidden bg-background p-2 sm:min-h-[520px] sm:p-3 lg:min-h-0 lg:p-4">
+              <BoardPanel
+                game={displayBoardGame}
+                onMove={handleMove}
+                lastMoveSquares={displayBoardLastMove}
+                isAIThinking={isAIThinking && !trainingBoard.isTrainingActive}
+                boardOrientation={displayBoardOrientation}
+                isReviewMode={
+                  effectiveViewIndex !== null && !trainingBoard.isTrainingActive
+                }
+                arrows={displayBoardArrows}
+                previewSquares={displayPreviewSquares}
+                onSquareSelect={
+                  activeMode === "vision" ? handleVisionSquareSelect : null
+                }
+                hideHud={activeMode === "vision"}
+                hideStatus={activeMode === "vision"}
+                premove={premove}
+                playerColor={playerColor}
+                onPlayerColorChange={handlePlayerColorChange}
+                isGameInProgress={moveHistory.length > 0}
+                onCancelPremove={() => {
+                  setPremove(null);
+                  premoveReference.current = null;
+                }}
+                boardColors={boardColors}
+              />
             </div>
-          ) : (
-            <>
-              <button
-                onClick={() => setRightSidebarCollapsed(true)}
-                className="absolute right-3 top-14 z-50 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-md transition-colors hover:bg-secondary"
-                title="Close right sidebar"
-              >
-                Close
-              </button>
-              {activeMode === "daily" ? (
-                <DailyRoutinePanel onStartTask={handleStartRoutineTask} />
-              ) : activeMode === "vision" ? (
-                <BoardVisionPanel
-                  card={visionCard}
-                  score={visionScore}
-                  attempts={visionAttempts}
-                  streak={visionStreak}
-                  bestStreak={visionBestStreak}
-                  feedback={visionFeedback}
-                  onNext={nextVisionCard}
-                  onReset={resetVisionDrill}
-                />
-              ) : activeMode === "database" ? (
-                <DatabasePanel
-                  onLoadGame={handleLoadGame}
-                  onPreviewPosition={handlePreviewPosition}
-                  onClearPreview={handleClearPreviewLine}
-                />
-              ) : activeMode === "training" ? (
-                <TrainingPanel
-                  initialModule={trainingInitialModule}
-                  onBoardUpdate={handleTrainingBoardUpdate}
-                  onRegisterMoveHandler={handleRegisterMoveHandler}
-                  messages={messages}
-                  onSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  onAskAI={handleAskAI}
-                  onLearnWithAI={handleLearnWithAI}
-                  tokenStats={tokenStats}
-                  setMessages={setMessages}
-                />
-              ) : activeMode === "tutorials" ? (
-                <TrainingOpeningTutorialPanel
-                  onBoardUpdate={handleTrainingBoardUpdate}
-                  onRegisterMoveHandler={handleRegisterMoveHandler}
-                  onBack={handleTutorialsBack}
-                />
+
+            <div className="relative min-h-0 min-w-0 border-t border-border bg-card lg:border-l lg:border-t-0">
+              {rightSidebarCollapsed ? (
+                <div className="flex h-full items-start justify-center pt-3">
+                  <button
+                    onClick={() => setRightSidebarCollapsed(false)}
+                    className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-secondary"
+                    title="Open right sidebar"
+                  >
+                    Open
+                  </button>
+                </div>
               ) : (
-                <ChatPanel
-                  messages={messages}
-                  onSendMessage={handleSendMessage}
-                  isLoading={isLoading}
-                  coachMode={coachMode}
-                  onCoachModeChange={setCoachMode}
-                  isLiveMode={isLiveMode}
-                  onEngineAnalyze={handleEngineAnalyze}
-                  onEngineBestMove={handleEngineBestMove}
-                  onEngineHint={handleEngineHint}
-                  onThinkLikeGM={() => {
-                    setCoachMode("ai");
-                    handleThinkLikeGM(moveHistory.map((m) => m.san));
-                  }}
-                  onAskAI={handleAskAI}
-                  onLearnWithAI={handleLearnWithAI}
-                  tokenStats={tokenStats}
-                  historyPanel={moveHistoryPanel}
-                  onPreviewLine={handlePreviewLine}
-                  onPreviewPosition={handlePreviewPosition}
-                  onClearPreview={handleClearPreviewLine}
-                  onJumpToMove={handleJumpToMove}
-                />
+                <>
+                  <button
+                    onClick={() => setRightSidebarCollapsed(true)}
+                    className="absolute right-3 top-14 z-50 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-md transition-colors hover:bg-secondary"
+                    title="Close right sidebar"
+                  >
+                    Close
+                  </button>
+                  {activeMode === "vision" ? (
+                    <BoardVisionPanel
+                      card={visionCard}
+                      score={visionScore}
+                      attempts={visionAttempts}
+                      streak={visionStreak}
+                      bestStreak={visionBestStreak}
+                      feedback={visionFeedback}
+                      onNext={nextVisionCard}
+                      onReset={resetVisionDrill}
+                    />
+                  ) : activeMode === "database" ? (
+                    <DatabasePanel
+                      onLoadGame={handleLoadGame}
+                      onPreviewPosition={handlePreviewPosition}
+                      onClearPreview={handleClearPreviewLine}
+                    />
+                  ) : activeMode === "training" ? (
+                    <TrainingPanel
+                      initialModule={trainingInitialModule}
+                      onBoardUpdate={handleTrainingBoardUpdate}
+                      onRegisterMoveHandler={handleRegisterMoveHandler}
+                      messages={messages}
+                      onSendMessage={handleSendMessage}
+                      isLoading={isLoading}
+                      onAskAI={handleAskAI}
+                      onLearnWithAI={handleLearnWithAI}
+                      tokenStats={tokenStats}
+                      setMessages={setMessages}
+                    />
+                  ) : activeMode === "tutorials" ? (
+                    <TrainingOpeningTutorialPanel
+                      onBoardUpdate={handleTrainingBoardUpdate}
+                      onRegisterMoveHandler={handleRegisterMoveHandler}
+                      onBack={handleTutorialsBack}
+                    />
+                  ) : (
+                    <ChatPanel
+                      messages={messages}
+                      onSendMessage={handleSendMessage}
+                      isLoading={isLoading}
+                      coachMode={coachMode}
+                      onCoachModeChange={setCoachMode}
+                      isLiveMode={isLiveMode}
+                      onEngineAnalyze={handleEngineAnalyze}
+                      onEngineBestMove={handleEngineBestMove}
+                      onEngineHint={handleEngineHint}
+                      onThinkLikeGM={() => {
+                        setCoachMode("ai");
+                        handleThinkLikeGM(moveHistory.map((m) => m.san));
+                      }}
+                      onAskAI={handleAskAI}
+                      onLearnWithAI={handleLearnWithAI}
+                      tokenStats={tokenStats}
+                      historyPanel={moveHistoryPanel}
+                      onPreviewLine={handlePreviewLine}
+                      onPreviewPosition={handlePreviewPosition}
+                      onClearPreview={handleClearPreviewLine}
+                      onJumpToMove={handleJumpToMove}
+                    />
+                  )}
+                </>
               )}
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Dialogs & Overlays */}
