@@ -4,6 +4,7 @@ import {
   Download,
   FileJson,
   Film,
+  Upload,
   RotateCcw,
   Trash2,
 } from "lucide-react";
@@ -11,7 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { migrateMoveHistory } from "@/lib/chess-helpers";
-import { deleteGame, listGames } from "@/lib/db";
+import { deleteGame, listGames, saveGame } from "@/lib/db";
 
 const BOARD_SIZE = 320;
 const SQUARE_SIZE = BOARD_SIZE / 8;
@@ -271,10 +272,77 @@ const downloadGif = (game) => {
   downloadBlob(buildGifBlob(game), `${sanitizeName(game.name)}.gif`);
 };
 
+const parsePgnHeaders = (pgn) => {
+  const headers = {};
+  const headerPattern = /^\[([A-Za-z0-9_]+)\s+"([^"]*)"\]$/gm;
+  let match = headerPattern.exec(pgn);
+  while (match) {
+    const [, key, value] = match;
+    headers[key] = value;
+    match = headerPattern.exec(pgn);
+  }
+  return headers;
+};
+
+const gameResultFromHeader = (result) => {
+  if (result === "1-0") return "white";
+  if (result === "0-1") return "black";
+  if (result === "1/2-1/2") return "draw";
+  return null;
+};
+
+const buildMoveHistoryFromGame = (game) =>
+  game.history({ verbose: true }).map((move) => ({
+    san: move.san,
+    fen: move.after,
+    from: move.from,
+    to: move.to,
+  }));
+
+const buildImportedGame = (pgn) => {
+  const cleanPgn = pgn.trim();
+  if (!cleanPgn) {
+    throw new Error("Paste a PGN game first.");
+  }
+
+  const game = new Chess();
+  game.loadPgn(cleanPgn);
+  const headers = parsePgnHeaders(cleanPgn);
+  const moveHistory = buildMoveHistoryFromGame(game);
+
+  if (moveHistory.length === 0) {
+    throw new Error("No moves were found in that PGN.");
+  }
+
+  const white = headers.White || "White";
+  const black = headers.Black || "Black";
+  const result = headers.Result || "*";
+
+  return {
+    fen: game.fen(),
+    pgn: game.pgn(),
+    moveHistory,
+    opponent: "imported",
+    difficulty: "Chess.com",
+    boardOrientation: "white",
+    playerColor: "white",
+    gameResult: gameResultFromHeader(result),
+    playerResult: null,
+    name: `${white} vs ${black} · ${result}`,
+    completedAt: Date.now(),
+    isImported: true,
+    importSource: headers.Site || "PGN",
+    importedHeaders: headers,
+  };
+};
+
 const DatabasePanel = ({ onLoadGame, onPreviewPosition, onClearPreview }) => {
   const [games, setGames] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [selectedMoveIndex, setSelectedMoveIndex] = useState(-1);
+  const [importPgn, setImportPgn] = useState("");
+  const [importError, setImportError] = useState("");
+  const [importSuccess, setImportSuccess] = useState("");
 
   const refreshGames = useCallback(() => {
     listGames()
@@ -325,6 +393,24 @@ const DatabasePanel = ({ onLoadGame, onPreviewPosition, onClearPreview }) => {
     refreshGames();
   };
 
+  const handleImportPgn = async () => {
+    setImportError("");
+    setImportSuccess("");
+    try {
+      const importedGame = buildImportedGame(importPgn);
+      const id = await saveGame(importedGame);
+      setSelectedId(id);
+      setSelectedMoveIndex(-1);
+      setImportPgn("");
+      setImportSuccess("Imported. Load it to analyze the game on this board.");
+      refreshGames();
+    } catch (error) {
+      setImportError(
+        error instanceof Error ? error.message : "Could not import that PGN.",
+      );
+    }
+  };
+
   return (
     <div className="flex h-full flex-col bg-card">
       <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
@@ -337,9 +423,43 @@ const DatabasePanel = ({ onLoadGame, onPreviewPosition, onClearPreview }) => {
 
       <div className="grid min-h-0 flex-1 grid-rows-[minmax(150px,38%)_minmax(0,1fr)]">
         <div className="overflow-y-auto border-b border-border p-2">
+          <div className="mb-2 rounded-lg border border-border bg-muted/20 p-2">
+            <div className="mb-2 flex items-center gap-2">
+              <Upload className="h-3.5 w-3.5 text-primary" />
+              <p className="text-xs font-semibold">Import Chess.com PGN</p>
+            </div>
+            <textarea
+              value={importPgn}
+              onChange={(event) => {
+                setImportPgn(event.target.value);
+                setImportError("");
+                setImportSuccess("");
+              }}
+              placeholder='Paste PGN here, e.g. [Event "Live Chess"] ... 1. e4 e5 ...'
+              className="min-h-20 w-full resize-y rounded-md border border-border bg-card px-2 py-1.5 text-[11px] text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary/60"
+            />
+            <Button
+              size="sm"
+              className="mt-2 h-8 w-full text-xs"
+              onClick={handleImportPgn}
+              disabled={!importPgn.trim()}
+            >
+              <Upload className="mr-1 h-3.5 w-3.5" />
+              Import PGN
+            </Button>
+            {importError && (
+              <p className="mt-1.5 text-[11px] text-red-400">{importError}</p>
+            )}
+            {importSuccess && (
+              <p className="mt-1.5 text-[11px] text-emerald-400">
+                {importSuccess}
+              </p>
+            )}
+          </div>
+
           {games.length === 0 ? (
             <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs text-muted-foreground">
-              Completed games will be recorded here automatically.
+              Completed and imported games will appear here.
             </div>
           ) : (
             <div className="space-y-1.5">

@@ -596,7 +596,8 @@ const App = () => {
           : null;
         gameReference.current = game;
         setFen(game.fen());
-        setMoveHistory(migrateMoveHistory(saved.moveHistory || []));
+        const loadedHistory = migrateMoveHistory(saved.moveHistory || []);
+        setMoveHistory(loadedHistory);
         setRedoHistory([]);
         setMoveQuality(null);
         setMessages([]);
@@ -613,8 +614,14 @@ const App = () => {
         premoveReference.current = null;
         setAnnotations({});
         if (saved.boardOrientation) setBoardOrientation(saved.boardOrientation);
-        if (saved.opponent) setOpponent(saved.opponent);
-        if (saved.difficulty) setDifficulty(getBotProfile(saved.difficulty).id);
+        if (saved.opponent) {
+          setOpponent(
+            saved.opponent === "imported" ? "manual" : saved.opponent,
+          );
+        }
+        if (saved.difficulty && saved.opponent !== "imported") {
+          setDifficulty(getBotProfile(saved.difficulty).id);
+        }
         if (saved.playerColor) setPlayerColor(saved.playerColor);
         const hist = game.history({ verbose: true });
         if (hist.length > 0) {
@@ -630,11 +637,17 @@ const App = () => {
             .then((result) => applyEvalScore(result, loadedFen))
             .catch(() => {});
         }, 500);
+        if (
+          (game.isGameOver() || saved.isImported || saved.gameResult) &&
+          loadedHistory.length > 0
+        ) {
+          setTimeout(() => triggerPostGameAnalysis(loadedHistory), 1200);
+        }
       } catch (error) {
         console.error("Failed to load saved game:", error);
       }
     },
-    [applyEvalScore, isAnalyzingRef],
+    [applyEvalScore, isAnalyzingRef, triggerPostGameAnalysis],
   );
 
   // ── Trigger AI/engine opponent move ──────────────────────────────────────
@@ -1352,18 +1365,36 @@ const App = () => {
     }
   }, [opponent]);
 
-  const handleModeChange = useCallback((mode) => {
-    setActiveMode(mode);
-    if (mode === "play") {
-      setIsLiveMode(true);
+  const handleModeChange = useCallback(
+    (mode) => {
+      const leavingActiveGame =
+        activeMode === "play" &&
+        mode !== "play" &&
+        moveHistory.length > 0 &&
+        !gameReference.current.isGameOver();
+
+      if (
+        leavingActiveGame &&
+        !window.confirm(
+          "Your game is still in progress. Leave Play mode? The board will stay intact unless you start a new game.",
+        )
+      ) {
+        return;
+      }
+
+      setActiveMode(mode);
+      if (mode === "play") {
+        setIsLiveMode(true);
+        setPuzzleOpen(false);
+        setTrainingInitialModule(null);
+        return;
+      }
+      setIsLiveMode(false);
       setPuzzleOpen(false);
       setTrainingInitialModule(null);
-      return;
-    }
-    setIsLiveMode(false);
-    setPuzzleOpen(false);
-    setTrainingInitialModule(null);
-  }, []);
+    },
+    [activeMode, moveHistory.length],
+  );
 
   const handleStartRoutineTask = useCallback((target) => {
     setRightSidebarCollapsed(false);
