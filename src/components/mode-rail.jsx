@@ -7,7 +7,7 @@ import {
   GraduationCap,
   ScanEye,
   Moon,
-  Puzzle,
+  BookOpenCheck,
   Settings,
   Sun,
 } from "lucide-react";
@@ -24,14 +24,14 @@ const MODES = [
     icon: CalendarCheck,
   },
   {
-    id: "challenges",
-    label: "Challenges",
-    icon: Puzzle,
-  },
-  {
     id: "training",
     label: "Training",
     icon: GraduationCap,
+  },
+  {
+    id: "tutorials",
+    label: "Tutorials",
+    icon: BookOpenCheck,
   },
   {
     id: "vision",
@@ -130,30 +130,29 @@ const ModeRail = ({
         Options
       </span>
       <div className="flex items-center gap-1">
-      <button
-        type="button"
-        onClick={onToggleDarkMode}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-      >
-        {isDarkMode ? (
-          <Sun className="h-4 w-4" />
-        ) : (
-          <Moon className="h-4 w-4" />
-        )}
-      </button>
-      <button
-        type="button"
-        onClick={onOpenSettings}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        title="Settings"
-      >
-        <Settings className="h-4 w-4" />
-      </button>
+        <button
+          type="button"
+          onClick={onToggleDarkMode}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {isDarkMode ? (
+            <Sun className="h-4 w-4" />
+          ) : (
+            <Moon className="h-4 w-4" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          title="Settings"
+        >
+          <Settings className="h-4 w-4" />
+        </button>
       </div>
     </div>
   </aside>
 );
 
 export default ModeRail;
-

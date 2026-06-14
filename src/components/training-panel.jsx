@@ -32,7 +32,6 @@ import {
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 
-import TrainingOpeningTutorialPanel from "@/components/training-opening-tutorial-panel";
 import TrainingPuzzleQuizPanel from "@/components/training-puzzle-quiz-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1945,16 +1944,6 @@ const MODULES = [
     border: "border-orange-500/30 hover:border-orange-400/60",
     count: "JSON library",
   },
-  {
-    id: "opening",
-    icon: BookOpen,
-    label: "Opening Tutorials",
-    desc: "Study curated tutorial scripts with plans, coach moves, and real ideas.",
-    color: "text-blue-400",
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/30 hover:border-blue-400/60",
-    count: "JSON library",
-  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1968,6 +1957,7 @@ const MODULES = [
  * - onRegisterMoveHandler(fn | null) — registers/unregisters training move handler
  */
 export default function TrainingPanel({
+  initialModule = null,
   onBoardUpdate,
   onRegisterMoveHandler,
   messages = [],
@@ -1978,8 +1968,12 @@ export default function TrainingPanel({
   tokenStats,
   setMessages,
 }) {
-  const [activeModule, setActiveModule] = useState(null); // null | "puzzle" | "opening"
+  const [activeModule, setActiveModule] = useState(initialModule); // null | "puzzle"
   const [rightTab, setRightTab] = useState("training"); // "training" | "ai"
+
+  useEffect(() => {
+    setActiveModule(initialModule);
+  }, [initialModule]);
 
   const handleClearChat = useCallback(() => {
     if (setMessages) {
@@ -2206,9 +2200,6 @@ export default function TrainingPanel({
         <>
           {activeModule === "puzzle" && (
             <TrainingPuzzleQuizPanel {...sharedProperties} />
-          )}
-          {activeModule === "opening" && (
-            <TrainingOpeningTutorialPanel {...sharedProperties} />
           )}
         </>
       )}

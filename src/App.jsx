@@ -18,6 +18,7 @@ import PositionSetupDialog from "@/components/position-setup-dialog";
 import PuzzleMode from "@/components/puzzle-mode";
 import SavedGamesDialog from "@/components/saved-games-dialog";
 import SettingsDialog from "@/components/settings-dialog";
+import TrainingOpeningTutorialPanel from "@/components/training-opening-tutorial-panel";
 import TrainingPanel from "@/components/training-panel";
 import useAiChat from "@/hooks/use-ai-chat";
 import { useChessClock, TIME_CONTROLS } from "@/hooks/use-chess-clock";
@@ -66,7 +67,9 @@ const getStoredRightSidebarCollapsed = () =>
 
 const getStoredMessages = () => {
   try {
-    const parsed = JSON.parse(localStorage.getItem("chess-chat-messages") || "[]");
+    const parsed = JSON.parse(
+      localStorage.getItem("chess-chat-messages") || "[]",
+    );
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -267,8 +270,8 @@ const App = () => {
     : activeMode === "vision"
       ? []
       : previewArrows.length > 0
-      ? previewArrows
-      : bestMoveArrows;
+        ? previewArrows
+        : bestMoveArrows;
 
   const visionPreviewSquares = useMemo(() => {
     if (activeMode !== "vision" || !visionSelection?.square) return [];
@@ -276,10 +279,9 @@ const App = () => {
     return [
       {
         square: visionSelection.square,
-        background:
-          isCorrect
-            ? "radial-gradient(circle, rgba(34, 197, 94, 0.42) 55%, rgba(34, 197, 94, 0.2) 56%)"
-            : "radial-gradient(circle, rgba(239, 68, 68, 0.42) 55%, rgba(239, 68, 68, 0.2) 56%)",
+        background: isCorrect
+          ? "radial-gradient(circle, rgba(34, 197, 94, 0.42) 55%, rgba(34, 197, 94, 0.2) 56%)"
+          : "radial-gradient(circle, rgba(239, 68, 68, 0.42) 55%, rgba(239, 68, 68, 0.2) 56%)",
         boxShadow: isCorrect
           ? "inset 0 0 0 4px rgba(34, 197, 94, 0.65), 0 0 16px rgba(34, 197, 94, 0.35)"
           : "inset 0 0 0 4px rgba(239, 68, 68, 0.65), 0 0 16px rgba(239, 68, 68, 0.35)",
@@ -313,6 +315,7 @@ const App = () => {
   const [openingDrillOpen, setOpeningDrillOpen] = useState(false);
   const [endgameOpen, setEndgameOpen] = useState(false);
   const [openingStatsOpen, setOpeningStatsOpen] = useState(false);
+  const [trainingInitialModule, setTrainingInitialModule] = useState(null);
 
   // ── Chess clock ──────────────────────────────────────────────────────────
   const [clockEnabled, setClockEnabled] = useState(false);
@@ -751,21 +754,24 @@ const App = () => {
     setPreviewMoveIndex(null);
     setViewIndex(null);
   }, []);
-  const handlePreviewHistoryMove = useCallback((index) => {
-    setPreviewFen(null);
-    setPreviewSquares([]);
-    setPreviewMoveIndex(index);
-    const entry = moveHistory[index];
-    if (entry?.from && entry?.to) {
-      setPreviewArrows([
-        {
-          startSquare: entry.from,
-          endSquare: entry.to,
-          color: "#22c55e",
-        },
-      ]);
-    }
-  }, [moveHistory]);
+  const handlePreviewHistoryMove = useCallback(
+    (index) => {
+      setPreviewFen(null);
+      setPreviewSquares([]);
+      setPreviewMoveIndex(index);
+      const entry = moveHistory[index];
+      if (entry?.from && entry?.to) {
+        setPreviewArrows([
+          {
+            startSquare: entry.from,
+            endSquare: entry.to,
+            color: "#22c55e",
+          },
+        ]);
+      }
+    },
+    [moveHistory],
+  );
   const handleClearHistoryPreview = useCallback(() => {
     setPreviewMoveIndex(null);
     setPreviewFen(null);
@@ -818,7 +824,10 @@ const App = () => {
 
   // ── Reset training state when switching TO live mode ────────────────────
   useEffect(() => {
-    if (isLiveMode || activeMode !== "training") {
+    if (
+      isLiveMode ||
+      (activeMode !== "training" && activeMode !== "tutorials")
+    ) {
       trainingHandlerReference.current = null;
       setTrainingBoard({
         fen: null,
@@ -868,12 +877,15 @@ const App = () => {
     }
   }, []);
 
-  const handlePreviewPosition = useCallback((fen, arrows = [], squares = []) => {
-    if (!fen) return;
-    setPreviewFen(fen);
-    setPreviewArrows(arrows);
-    setPreviewSquares(squares);
-  }, []);
+  const handlePreviewPosition = useCallback(
+    (fen, arrows = [], squares = []) => {
+      if (!fen) return;
+      setPreviewFen(fen);
+      setPreviewArrows(arrows);
+      setPreviewSquares(squares);
+    },
+    [],
+  );
 
   const handleClearPreviewLine = useCallback(() => {
     setPreviewFen(null);
@@ -1299,15 +1311,12 @@ const App = () => {
     if (mode === "play") {
       setIsLiveMode(true);
       setPuzzleOpen(false);
-      return;
-    }
-    if (mode === "challenges") {
-      setIsLiveMode(true);
-      setPuzzleOpen(true);
+      setTrainingInitialModule(null);
       return;
     }
     setIsLiveMode(false);
     setPuzzleOpen(false);
+    setTrainingInitialModule(null);
   }, []);
 
   const handleStartRoutineTask = useCallback((target) => {
@@ -1319,9 +1328,10 @@ const App = () => {
       return;
     }
     if (target === "tactics") {
-      setActiveMode("challenges");
-      setIsLiveMode(true);
-      setPuzzleOpen(true);
+      setActiveMode("training");
+      setIsLiveMode(false);
+      setPuzzleOpen(false);
+      setTrainingInitialModule("puzzle");
       return;
     }
     if (target === "review") {
@@ -1334,7 +1344,12 @@ const App = () => {
     setActiveMode("play");
     setIsLiveMode(true);
     setPuzzleOpen(false);
+    setTrainingInitialModule(null);
   }, []);
+
+  const handleTutorialsBack = useCallback(() => {
+    handleModeChange("play");
+  }, [handleModeChange]);
 
   const moveHistoryPanel = (
     <MoveHistorySidebar
@@ -1474,6 +1489,7 @@ const App = () => {
                 />
               ) : activeMode === "training" ? (
                 <TrainingPanel
+                  initialModule={trainingInitialModule}
                   onBoardUpdate={handleTrainingBoardUpdate}
                   onRegisterMoveHandler={handleRegisterMoveHandler}
                   messages={messages}
@@ -1483,6 +1499,12 @@ const App = () => {
                   onLearnWithAI={handleLearnWithAI}
                   tokenStats={tokenStats}
                   setMessages={setMessages}
+                />
+              ) : activeMode === "tutorials" ? (
+                <TrainingOpeningTutorialPanel
+                  onBoardUpdate={handleTrainingBoardUpdate}
+                  onRegisterMoveHandler={handleRegisterMoveHandler}
+                  onBack={handleTutorialsBack}
                 />
               ) : (
                 <ChatPanel
@@ -1565,5 +1587,3 @@ const App = () => {
 };
 
 export default App;
-
-
