@@ -30,33 +30,33 @@ import { Input } from "@/components/ui/input";
 const QUALITY_STYLES = {
   Brilliant: {
     border: "border-cyan-500/60",
-    bg: "bg-cyan-950/50",
-    badge: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
+    bg: "bg-cyan-50 text-cyan-950 dark:bg-cyan-950/50 dark:text-cyan-50",
+    badge: "bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40",
   },
   Excellent: {
     border: "border-emerald-500/60",
-    bg: "bg-emerald-950/40",
-    badge: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+    bg: "bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-50",
+    badge: "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40",
   },
   Good: {
     border: "border-green-600/50",
-    bg: "bg-green-950/30",
-    badge: "bg-green-500/20 text-green-300 border-green-500/40",
+    bg: "bg-green-50 text-green-950 dark:bg-green-950/30 dark:text-green-50",
+    badge: "bg-green-100 text-green-700 border-green-300 dark:bg-green-500/20 dark:text-green-300 dark:border-green-500/40",
   },
   Inaccuracy: {
     border: "border-yellow-500/50",
-    bg: "bg-yellow-950/30",
-    badge: "bg-yellow-500/20 text-yellow-300 border-yellow-500/40",
+    bg: "bg-yellow-50 text-yellow-950 dark:bg-yellow-950/30 dark:text-yellow-50",
+    badge: "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-500/20 dark:text-yellow-300 dark:border-yellow-500/40",
   },
   Mistake: {
     border: "border-orange-500/60",
-    bg: "bg-orange-950/40",
-    badge: "bg-orange-500/20 text-orange-300 border-orange-500/40",
+    bg: "bg-orange-50 text-orange-950 dark:bg-orange-950/40 dark:text-orange-50",
+    badge: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/40",
   },
   Blunder: {
     border: "border-red-500/70",
-    bg: "bg-red-950/50",
-    badge: "bg-red-500/20 text-red-300 border-red-500/40",
+    bg: "bg-red-50 text-red-950 dark:bg-red-950/50 dark:text-red-50",
+    badge: "bg-red-100 text-red-700 border-red-300 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/40",
   },
 };
 
@@ -135,28 +135,28 @@ const AI_MARKDOWN_COMPONENTS = {
 const SEVERITY_STYLES = {
   critical: {
     border: "border-red-500/70",
-    bg: "bg-red-950/50",
-    icon: "text-red-400",
+    bg: "bg-red-50 text-red-950 dark:bg-red-950/50 dark:text-red-50",
+    icon: "text-red-500 dark:text-red-400",
   },
   high: {
     border: "border-orange-500/60",
-    bg: "bg-orange-950/40",
-    icon: "text-orange-400",
+    bg: "bg-orange-50 text-orange-950 dark:bg-orange-950/40 dark:text-orange-50",
+    icon: "text-orange-500 dark:text-orange-400",
   },
   medium: {
     border: "border-yellow-500/50",
-    bg: "bg-yellow-950/30",
-    icon: "text-yellow-400",
+    bg: "bg-yellow-50 text-yellow-950 dark:bg-yellow-950/30 dark:text-yellow-50",
+    icon: "text-yellow-500 dark:text-yellow-400",
   },
   low: {
     border: "border-blue-500/40",
-    bg: "bg-blue-950/30",
-    icon: "text-blue-400",
+    bg: "bg-blue-50 text-blue-950 dark:bg-blue-950/30 dark:text-blue-50",
+    icon: "text-blue-500 dark:text-blue-400",
   },
   info: {
     border: "border-teal-500/50",
-    bg: "bg-teal-950/30",
-    icon: "text-teal-400",
+    bg: "bg-teal-50 text-teal-950 dark:bg-teal-950/30 dark:text-teal-50",
+    icon: "text-teal-500 dark:text-teal-400",
   },
 };
 
@@ -202,15 +202,25 @@ const MoveChip = ({ move, idx, onPreview, onClearPreview }) => {
   const isCastle = move.startsWith("O-O");
   const isPromotion = move.includes("=");
 
-  let cls = "bg-white/[0.06] text-foreground/80 border-white/10";
-  if (isMate) cls = "bg-red-500/20 text-red-300 border-red-500/30";
+  let cls =
+    "bg-background/70 text-foreground/80 border-border dark:bg-white/[0.06] dark:border-white/10";
+  if (isMate) {
+    cls =
+      "bg-red-100 text-red-700 border-red-300 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/30";
+  }
   else if (isCheck) {
-    cls = "bg-yellow-500/15 text-yellow-300 border-yellow-500/25";
+    cls =
+      "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-500/15 dark:text-yellow-300 dark:border-yellow-500/25";
   } else if (isCapture) {
-    cls = "bg-orange-500/15 text-orange-300 border-orange-500/25";
-  } else if (isCastle) cls = "bg-blue-500/15 text-blue-300 border-blue-500/25";
+    cls =
+      "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/25";
+  } else if (isCastle) {
+    cls =
+      "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25";
+  }
   else if (isPromotion) {
-    cls = "bg-purple-500/15 text-purple-300 border-purple-500/25";
+    cls =
+      "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/25";
   }
 
   const Component = onPreview ? "button" : "span";
@@ -383,25 +393,88 @@ const MyMoveCard = ({ card, onPreviewLine, onClearPreview, onJumpToMove }) => {
 /**
  *
  */
-const BestMoveCard = ({ card }) => {
+const AnalysisCard = ({ card, onPreviewLine, onClearPreview }) => {
   const eColor = evalColor(card.wScore);
+  const previewLine = (moves) => {
+    if (!card.previewFen || !onPreviewLine) return;
+    onPreviewLine(card.previewFen, moves);
+  };
 
   return (
-    <div className="rounded-xl border border-cyan-600/50 bg-cyan-950/40 p-3 text-sm space-y-2.5 w-full">
+    <div className="rounded-xl border border-cyan-500/50 bg-cyan-50 p-3 text-sm text-cyan-950 space-y-2.5 w-full dark:bg-cyan-950/40 dark:text-cyan-50">
+      <div className="flex items-center gap-2">
+        <Search className="h-3.5 w-3.5 shrink-0 text-cyan-500 dark:text-cyan-400" />
+        <span className="text-xs font-semibold text-cyan-700 dark:text-cyan-300">
+          Position Analysis
+        </span>
+      </div>
+      <div className={`flex items-center gap-1 text-xs font-mono ${eColor}`}>
+        {createElement(evalIcon(card.wScore), {
+          className: "h-3 w-3 shrink-0",
+        })}
+        <span>Evaluation: {card.evalStr}</span>
+      </div>
+      {card.lines?.length > 0 && (
+        <div className="space-y-2 border-t border-cyan-200 pt-2 dark:border-white/10">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Hover a line to preview it
+          </p>
+          {card.lines.map((line) => (
+            <div key={line.id} className="space-y-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-semibold text-cyan-700 dark:text-cyan-300">
+                  Line {line.id}
+                </span>
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  {line.evalLabel}
+                </span>
+              </div>
+              <MoveLine
+                moves={line.moves.slice(0, 6)}
+                startMoveNum={1}
+                getPreviewLine={(index) => line.moves.slice(0, index + 1)}
+                onPreviewLine={(moves) => previewLine(moves)}
+                onClearPreview={onClearPreview}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const BestMoveCard = ({ card, onPreviewLine, onClearPreview }) => {
+  const eColor = evalColor(card.wScore);
+  const previewLine = (moves) => {
+    if (!card.previewFen || !onPreviewLine) return;
+    onPreviewLine(card.previewFen, moves);
+  };
+
+  return (
+    <div className="rounded-xl border border-cyan-500/50 bg-cyan-50 p-3 text-sm text-cyan-950 space-y-2.5 w-full dark:bg-cyan-950/40 dark:text-cyan-50">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Lightbulb className="h-3.5 w-3.5 text-cyan-400 shrink-0" />
-        <span className="text-xs font-semibold text-cyan-300">Best Move</span>
+        <Lightbulb className="h-3.5 w-3.5 text-cyan-500 dark:text-cyan-400 shrink-0" />
+        <span className="text-xs font-semibold text-cyan-700 dark:text-cyan-300">Best Move</span>
       </div>
 
       {/* Big move display */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-lg font-bold font-mono text-foreground">
+          <button
+            type="button"
+            onMouseEnter={() => previewLine([card.moveSan])}
+            onMouseLeave={onClearPreview}
+            onFocus={() => previewLine([card.moveSan])}
+            onBlur={onClearPreview}
+            className="rounded px-1 text-lg font-bold font-mono text-foreground hover:bg-background/70 dark:hover:bg-white/10"
+            title="Preview best move"
+          >
             {card.moveSan}
-          </span>
+          </button>
           {card.tacticalTag && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.07] text-muted-foreground border border-white/10">
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-background/70 text-muted-foreground border border-border dark:bg-white/[0.07] dark:border-white/10">
               {card.tacticalTag}
             </span>
           )}
@@ -418,11 +491,17 @@ const BestMoveCard = ({ card }) => {
 
       {/* Continuation line */}
       {card.line.length > 1 && (
-        <div className="space-y-1 pt-1 border-t border-white/10">
+        <div className="space-y-1 pt-1 border-t border-cyan-200 dark:border-white/10">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-            Best continuation
+            Best continuation - hover to preview
           </p>
-          <MoveLine moves={card.line.slice(0, 5)} startMoveNum={1} />
+          <MoveLine
+            moves={card.line.slice(0, 5)}
+            startMoveNum={1}
+            getPreviewLine={(index) => card.line.slice(0, index + 1)}
+            onPreviewLine={(moves) => previewLine(moves)}
+            onClearPreview={onClearPreview}
+          />
         </div>
       )}
     </div>
@@ -442,16 +521,42 @@ const PIECE_ICONS = {
 /**
  *
  */
-const HintCard = ({ card }) => {
+const HintCard = ({
+  card,
+  onPreviewLine,
+  onPreviewPosition,
+  onClearPreview,
+}) => {
   const eColor = evalColor(card.wScore);
+  const previewHint = () => {
+    if (!card.previewFen) return;
+    const squares = card.fromSquare
+      ? [
+          {
+            square: card.fromSquare,
+            background:
+              "radial-gradient(circle, rgba(168, 85, 247, 0.62) 58%, rgba(168, 85, 247, 0.26) 59%)",
+            boxShadow:
+              "inset 0 0 0 5px rgba(168, 85, 247, 0.78), 0 0 22px rgba(168, 85, 247, 0.62)",
+          },
+        ]
+      : [];
+    if (card.previewLine?.length && onPreviewLine) {
+      onPreviewLine(card.previewFen, card.previewLine, squares);
+      return;
+    }
+    if (onPreviewPosition) {
+      onPreviewPosition(card.previewFen, [], squares);
+    }
+  };
 
   return (
-    <div className="rounded-xl border border-violet-600/50 bg-violet-950/40 p-3 text-sm space-y-2.5 w-full">
+    <div className="rounded-xl border border-violet-500/50 bg-violet-50 p-3 text-sm text-violet-950 space-y-2.5 w-full dark:bg-violet-950/40 dark:text-violet-50">
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <Crosshair className="h-3.5 w-3.5 text-violet-400 shrink-0" />
-          <span className="text-xs font-semibold text-violet-300">Hint</span>
+          <Crosshair className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400 shrink-0" />
+          <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">Hint</span>
         </div>
         {card.evalStr && (
           <div
@@ -472,14 +577,24 @@ const HintCard = ({ card }) => {
 
       {/* Piece-specific hint */}
       {card.pieceName && (
-        <div className="flex items-start gap-2 pt-1 border-t border-white/10">
+        <div className="flex items-start gap-2 pt-1 border-t border-violet-200 dark:border-white/10">
           <span className="text-base leading-none mt-0.5">
             {PIECE_ICONS[card.pieceType] || "♟"}
           </span>
           <div className="space-y-0.5">
             <p className="text-[11px] font-medium text-foreground/80">
               Think about your{" "}
-              <span className="text-violet-300">{card.pieceName}</span>
+              <button
+                type="button"
+                onMouseEnter={previewHint}
+                onMouseLeave={onClearPreview}
+                onFocus={previewHint}
+                onBlur={onClearPreview}
+                className="rounded px-1 text-violet-700 underline decoration-violet-400/60 underline-offset-2 hover:bg-violet-100 dark:text-violet-300 dark:hover:bg-violet-500/10"
+                title="Preview the hinted idea"
+              >
+                {card.pieceName}
+              </button>
               {card.fromSquare ? ` on ${card.fromSquare}` : ""}.
             </p>
             {card.pieceContext && (
@@ -498,10 +613,20 @@ const HintCard = ({ card }) => {
 /**
  *
  */
-const ThreatCard = ({ card, onAskAI, onLearnWithAI }) => {
+const ThreatCard = ({
+  card,
+  onAskAI,
+  onLearnWithAI,
+  onPreviewPosition,
+  onClearPreview,
+}) => {
   const primary = card.primaryThreat;
   const ss = SEVERITY_STYLES[primary.severity] || SEVERITY_STYLES.medium;
   const isOpeningOnly = primary.id === "opening";
+  const previewThreat = () => {
+    if (!card.previewFen || !onPreviewPosition) return;
+    onPreviewPosition(card.previewFen, primary.previewArrows || []);
+  };
 
   return (
     <div
@@ -514,9 +639,17 @@ const ThreatCard = ({ card, onAskAI, onLearnWithAI }) => {
         ) : (
           <AlertTriangle className={`h-4 w-4 shrink-0 ${ss.icon}`} />
         )}
-        <span className="text-xs font-semibold text-foreground/90">
+        <button
+          type="button"
+          onMouseEnter={previewThreat}
+          onMouseLeave={onClearPreview}
+          onFocus={previewThreat}
+          onBlur={onClearPreview}
+          className="rounded px-1 text-left text-xs font-semibold text-foreground/90 underline decoration-current/30 underline-offset-2 hover:bg-background/50 dark:hover:bg-white/10"
+          title="Preview this warning on the board"
+        >
           {primary.name}
-        </span>
+        </button>
         <div className="ml-auto">
           <MoveChip move={card.opponentMoveSan} />
         </div>
@@ -1043,6 +1176,7 @@ const MessageBubble = ({
   onAskAI,
   onLearnWithAI,
   onPreviewLine,
+  onPreviewPosition,
   onClearPreview,
   onJumpToMove,
 }) => {
@@ -1065,6 +1199,23 @@ const MessageBubble = ({
     );
   }
 
+  if (msg.type === "analysis-card" && typeof msg.content === "object") {
+    return (
+      <div className="flex gap-2.5 justify-start">
+        <div className="shrink-0 h-7 w-7 rounded-full flex items-center justify-center bg-cyan-500/15">
+          <Cpu className="h-3.5 w-3.5 text-cyan-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <AnalysisCard
+            card={msg.content}
+            onPreviewLine={onPreviewLine}
+            onClearPreview={onClearPreview}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (msg.type === "best-move-card" && typeof msg.content === "object") {
     return (
       <div className="flex gap-2.5 justify-start">
@@ -1072,7 +1223,11 @@ const MessageBubble = ({
           <Cpu className="h-3.5 w-3.5 text-cyan-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <BestMoveCard card={msg.content} />
+          <BestMoveCard
+            card={msg.content}
+            onPreviewLine={onPreviewLine}
+            onClearPreview={onClearPreview}
+          />
         </div>
       </div>
     );
@@ -1085,7 +1240,12 @@ const MessageBubble = ({
           <Crosshair className="h-3.5 w-3.5 text-violet-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <HintCard card={msg.content} />
+          <HintCard
+            card={msg.content}
+            onPreviewLine={onPreviewLine}
+            onPreviewPosition={onPreviewPosition}
+            onClearPreview={onClearPreview}
+          />
         </div>
       </div>
     );
@@ -1102,6 +1262,8 @@ const MessageBubble = ({
             card={msg.content}
             onAskAI={onAskAI}
             onLearnWithAI={onLearnWithAI}
+            onPreviewPosition={onPreviewPosition}
+            onClearPreview={onClearPreview}
           />
         </div>
       </div>
@@ -1144,10 +1306,10 @@ const MessageBubble = ({
         className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed whitespace-pre-line ${
           isUser
             ? msg.type === "engine-query"
-              ? "bg-cyan-500/20 text-cyan-100 border border-cyan-500/30"
+              ? "bg-cyan-50 text-cyan-900 border border-cyan-200 dark:bg-cyan-500/20 dark:text-cyan-100 dark:border-cyan-500/30"
               : "bg-primary text-primary-foreground"
             : isEngine
-              ? "bg-cyan-950/60 text-cyan-50 border border-cyan-800/40 font-mono text-xs"
+              ? "bg-cyan-50 text-cyan-950 border border-cyan-200 font-mono text-xs dark:bg-cyan-950/60 dark:text-cyan-50 dark:border-cyan-800/40"
               : "bg-secondary text-secondary-foreground"
         }`}
       >
@@ -1190,6 +1352,7 @@ const ChatPanel = ({
   tokenStats,
   historyPanel = null,
   onPreviewLine,
+  onPreviewPosition,
   onClearPreview,
   onJumpToMove,
 }) => {
@@ -1243,6 +1406,7 @@ const ChatPanel = ({
       return (
         m.type === "engine" ||
         m.type === "engine-query" ||
+        m.type === "analysis-card" ||
         m.type === "my-move-analysis" ||
         m.type === "threat-card" ||
         m.type === "best-move-card" ||
@@ -1253,6 +1417,7 @@ const ChatPanel = ({
       return (
         m.type !== "engine" &&
         m.type !== "engine-query" &&
+        m.type !== "analysis-card" &&
         m.type !== "my-move-analysis" &&
         m.type !== "threat-card" &&
         m.type !== "best-move-card" &&
@@ -1362,6 +1527,7 @@ const ChatPanel = ({
             onAskAI={onAskAI}
             onLearnWithAI={onLearnWithAI}
             onPreviewLine={onPreviewLine}
+            onPreviewPosition={onPreviewPosition}
             onClearPreview={onClearPreview}
             onJumpToMove={onJumpToMove}
           />
@@ -1398,30 +1564,30 @@ const ChatPanel = ({
               size="sm"
               onClick={onEngineAnalyze}
               disabled={isLoading}
-              className="flex flex-col h-auto py-2 gap-1 border-cyan-800/40 hover:bg-cyan-950/40 hover:border-cyan-600/60"
+              className="flex flex-col h-auto py-2 gap-1 border-cyan-300 text-cyan-700 hover:bg-cyan-50 hover:border-cyan-500 dark:border-cyan-800/40 dark:text-cyan-300 dark:hover:bg-cyan-950/40 dark:hover:border-cyan-600/60"
             >
-              <Search className="h-4 w-4 text-cyan-400" />
-              <span className="text-[11px] text-cyan-300">Analyze</span>
+              <Search className="h-4 w-4" />
+              <span className="text-[11px]">Analyze</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={onEngineBestMove}
               disabled={isLoading}
-              className="flex flex-col h-auto py-2 gap-1 border-cyan-800/40 hover:bg-cyan-950/40 hover:border-cyan-600/60"
+              className="flex flex-col h-auto py-2 gap-1 border-cyan-300 text-cyan-700 hover:bg-cyan-50 hover:border-cyan-500 dark:border-cyan-800/40 dark:text-cyan-300 dark:hover:bg-cyan-950/40 dark:hover:border-cyan-600/60"
             >
-              <Lightbulb className="h-4 w-4 text-cyan-400" />
-              <span className="text-[11px] text-cyan-300">Best Move</span>
+              <Lightbulb className="h-4 w-4" />
+              <span className="text-[11px]">Best Move</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={onEngineHint}
               disabled={isLoading}
-              className="flex flex-col h-auto py-2 gap-1 border-cyan-800/40 hover:bg-cyan-950/40 hover:border-cyan-600/60"
+              className="flex flex-col h-auto py-2 gap-1 border-cyan-300 text-cyan-700 hover:bg-cyan-50 hover:border-cyan-500 dark:border-cyan-800/40 dark:text-cyan-300 dark:hover:bg-cyan-950/40 dark:hover:border-cyan-600/60"
             >
-              <Crosshair className="h-4 w-4 text-cyan-400" />
-              <span className="text-[11px] text-cyan-300">Hint</span>
+              <Crosshair className="h-4 w-4" />
+              <span className="text-[11px]">Hint</span>
             </Button>
           </div>
           {/* Think Like a GM — full-width premium button */}
@@ -1430,9 +1596,9 @@ const ChatPanel = ({
             size="sm"
             onClick={onThinkLikeGM}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 py-2 border-amber-700/40 bg-amber-950/20 hover:bg-amber-950/40 hover:border-amber-600/60 text-amber-300"
+            className="w-full flex items-center justify-center gap-2 py-2 border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 hover:border-amber-500 dark:border-amber-700/40 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 dark:hover:border-amber-600/60 dark:text-amber-300"
           >
-            <Crown className="h-4 w-4 text-amber-400" />
+            <Crown className="h-4 w-4" />
             <span className="text-[11px] font-semibold">Think Like a GM</span>
           </Button>
         </div>

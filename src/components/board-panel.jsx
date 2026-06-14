@@ -23,18 +23,35 @@ const PIECE_ICONS = {
   b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" },
 };
 
+const SOUND_BASE_GAIN = {
+  move: 0.08,
+  capture: 0.12,
+  check: 0.06,
+  end: 0.1,
+};
+
+const getSoundLevel = (key, fallback = 80) => {
+  const stored = Number(localStorage.getItem(`chess-sound-${key}`));
+  if (!Number.isFinite(stored)) return fallback / 100;
+  return Math.max(0, Math.min(100, stored)) / 100;
+};
+
 // ── sounds (Web Audio) ──
 /**
  *
  */
 const playSound = (type) => {
   try {
+    const baseGain = SOUND_BASE_GAIN[type] ?? SOUND_BASE_GAIN.move;
+    const volume = baseGain * getSoundLevel("master", 80) * getSoundLevel(type);
+    if (volume <= 0) return;
+
     const context = new (window.AudioContext || window.webkitAudioContext)();
     const osc = context.createOscillator();
     const gain = context.createGain();
     osc.connect(gain);
     gain.connect(context.destination);
-    gain.gain.value = 0.08;
+    gain.gain.value = volume;
 
     if (type === "move") {
       osc.frequency.value = 400;
@@ -45,21 +62,18 @@ const playSound = (type) => {
     } else if (type === "capture") {
       osc.frequency.value = 300;
       osc.type = "triangle";
-      gain.gain.value = 0.12;
       gain.gain.setTargetAtTime(0, context.currentTime + 0.08, 0.03);
       osc.start();
       osc.stop(context.currentTime + 0.15);
     } else if (type === "check") {
       osc.frequency.value = 600;
       osc.type = "square";
-      gain.gain.value = 0.06;
       gain.gain.setTargetAtTime(0, context.currentTime + 0.15, 0.04);
       osc.start();
       osc.stop(context.currentTime + 0.2);
     } else if (type === "end") {
       osc.frequency.value = 250;
       osc.type = "sawtooth";
-      gain.gain.value = 0.1;
       gain.gain.setTargetAtTime(0, context.currentTime + 0.4, 0.1);
       osc.start();
       osc.stop(context.currentTime + 0.5);
@@ -166,10 +180,14 @@ const BoardPanel = ({
   playerColor,
   onPlayerColorChange,
   isGameInProgress,
+  onSquareSelect = null,
   isAIThinking = false,
   boardOrientation = "white",
   arrows = [],
+  previewSquares = [],
   isReviewMode = false,
+  hideHud = false,
+  hideStatus = false,
   premove = null,
   onCancelPremove = null,
   boardColors = { light: "#edeed1", dark: "#779952" },
@@ -339,6 +357,10 @@ const BoardPanel = ({
    *
    */
   const onSquareClick = ({ square }) => {
+    if (onSquareSelect) {
+      onSquareSelect(square);
+      return;
+    }
     if (isReviewMode) return;
     setRightClickedSquares({});
 
@@ -503,6 +525,19 @@ const BoardPanel = ({
       styles[premove.to] = { backgroundColor: "rgba(20, 184, 166, 0.65)" };
     }
 
+    for (const preview of previewSquares) {
+      if (!preview?.square) continue;
+      styles[preview.square] = {
+        ...styles[preview.square],
+        background:
+          preview.background ||
+          "radial-gradient(circle, rgba(168, 85, 247, 0.58) 55%, rgba(168, 85, 247, 0.24) 56%)",
+        boxShadow:
+          preview.boxShadow ||
+          "inset 0 0 0 4px rgba(168, 85, 247, 0.7), 0 0 18px rgba(168, 85, 247, 0.55)",
+      };
+    }
+
     return styles;
   }, [
     lastMoveSquares,
@@ -511,6 +546,7 @@ const BoardPanel = ({
     rightClickedSquares,
     invalidSquare,
     premove,
+    previewSquares,
   ]);
 
   return (
@@ -519,7 +555,7 @@ const BoardPanel = ({
       className="flex flex-col items-center justify-center gap-2 w-full h-full"
     >
       {/* Game status banner */}
-      {gameStatus && (
+      {!hideStatus && gameStatus && (
         <div
           className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium ${
             gameStatus.type === "checkmate"
@@ -540,6 +576,7 @@ const BoardPanel = ({
       )}
 
       {/* Captured pieces — opponent (top) */}
+      {!hideHud && (
       <div
         className="w-full flex justify-between items-center px-1"
         style={{ maxWidth: boardWidth }}
@@ -580,6 +617,7 @@ const BoardPanel = ({
           </span>
         </div>
       </div>
+      )}
 
       {/* Chess Board */}
       <div
@@ -624,16 +662,19 @@ const BoardPanel = ({
             onPieceDrop: ({ sourceSquare, targetSquare, piece }) =>
               onDrop(sourceSquare, targetSquare, piece),
             onSquareClick:
-              isAIThinking || isReviewMode ? () => {} : onSquareClick,
+              isAIThinking || (isReviewMode && !onSquareSelect)
+                ? () => {}
+                : onSquareClick,
             onPieceClick:
-              isAIThinking || isReviewMode
+              isAIThinking || (isReviewMode && !onSquareSelect)
                 ? () => {}
                 : ({ square }) => onSquareClick({ square }),
             onSquareRightClick,
             onPieceDrag,
             boardOrientation,
             animationDurationInMs: 200,
-            allowDragging: !isGameOver && !isAIThinking && !isReviewMode,
+            allowDragging:
+              !onSquareSelect && !isGameOver && !isAIThinking && !isReviewMode,
             canDragPiece,
             boardStyle: { borderRadius: "0px" },
             darkSquareStyle: { backgroundColor: boardColors.dark },
@@ -649,6 +690,7 @@ const BoardPanel = ({
       </div>
 
       {/* Captured pieces — player (bottom) */}
+      {!hideHud && (
       <div
         className="w-full flex justify-between items-center px-1"
         style={{ maxWidth: boardWidth }}
@@ -681,6 +723,7 @@ const BoardPanel = ({
           </span>
         </div>
       </div>
+      )}
     </div>
   );
 };

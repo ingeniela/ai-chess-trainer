@@ -67,6 +67,38 @@ export const buildAnalysisMessage = (result, fen) => {
   return out.trim();
 };
 
+export const buildAnalysisCard = (result, fen) => {
+  const { lines, scoreCp, isMate, mateIn } = result;
+  const isWhite = new Chess(fen).turn() === "w";
+  const scoreString = fmtScore(scoreCp, isMate, mateIn, isWhite);
+
+  return {
+    type: "analysis-card",
+    previewFen: fen,
+    evalStr: scoreString,
+    wScore: isMate
+      ? null
+      : scoreCp !== null
+        ? (isWhite ? scoreCp : -scoreCp) / 100
+        : null,
+    lines: (lines || []).slice(0, 3).map((line, index) => {
+      const moves = pvToSan(fen, line.pv || []);
+      const evalLabel = line.isMate
+        ? `M${Math.abs(line.mateIn)}`
+        : line.scoreCp !== null
+          ? line.scoreCp >= 0
+            ? `+${(line.scoreCp / 100).toFixed(1)}`
+            : (line.scoreCp / 100).toFixed(1)
+          : "";
+      return {
+        id: index + 1,
+        moves,
+        evalLabel,
+      };
+    }),
+  };
+};
+
 // ── Hint messages and piece context ──────────────────────────────────────────
 export const HINT_MESSAGES = [
   "There's a stronger move hiding in plain sight — look again!",
@@ -166,6 +198,7 @@ export const buildBestMoveCard = (result, fen, messageSeed = 0) => {
 
   return {
     type: "best-move-card",
+    previewFen: fen,
     moveSan: san[0] || bestMove,
     evalStr: evalString,
     wScore,
@@ -191,6 +224,7 @@ export const buildHintCard = (result, fen, messageSeed = 0) => {
   let pieceType = null;
   let fromSquare = null;
   let pieceContext = "";
+  let previewLine = [];
 
   if (bestMove) {
     try {
@@ -205,6 +239,7 @@ export const buildHintCard = (result, fen, messageSeed = 0) => {
         fromSquare = mv.from;
         const contextArray = HINT_PIECE_CONTEXTS[mv.piece] || [];
         pieceContext = contextArray[messageSeed % contextArray.length] || "";
+        previewLine = [mv.san];
       }
     } catch {
       /* ignore */
@@ -215,6 +250,8 @@ export const buildHintCard = (result, fen, messageSeed = 0) => {
 
   return {
     type: "hint-card",
+    previewFen: fen,
+    previewLine,
     pieceType,
     pieceName: pieceType ? PIECE_NAMES[pieceType] : null,
     fromSquare,

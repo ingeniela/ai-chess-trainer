@@ -701,6 +701,7 @@ export const buildThreatCard = (
     };
     return {
       type: "threat-card",
+      previewFen: game.fen(),
       opponentMoveSan,
       primaryThreat: threat,
       allThreats: [threat],
@@ -722,6 +723,11 @@ export const buildThreatCard = (
       icon: "⚔️",
       description: `${pickThreatMessage("fork", messageSeed)} The ${PIECE_NAMES[fork.forkingPiece].toLowerCase()} on ${fork.forkingSquare} attacks your ${targetNames}.`,
       severity: "high",
+      previewArrows: fork.targets.map((target) => ({
+        startSquare: fork.forkingSquare,
+        endSquare: target.square,
+        color: "#f97316",
+      })),
     });
   }
 
@@ -735,6 +741,9 @@ export const buildThreatCard = (
       icon: "🎯",
       description: `${pickThreatMessage("hanging", (messageSeed + 1) % 6)} Your ${PIECE_NAMES[main.piece].toLowerCase()} on ${main.square} is undefended and under attack.`,
       severity: hanging[0].value >= 5 ? "high" : "medium",
+      previewArrows: lastMoveTo
+        ? [{ startSquare: lastMoveTo, endSquare: main.square, color: "#f97316" }]
+        : [],
     });
   }
 
@@ -750,6 +759,10 @@ export const buildThreatCard = (
       description: `${pickThreatMessage("pin", messageSeed)} Your ${PIECE_NAMES[p.pinnedPiece].toLowerCase()} on ${p.pinnedSquare} is pinned${isAbsolute ? " to your king" : ` against your ${PIECE_NAMES[p.pinnedAgainst].toLowerCase()}`} by the ${PIECE_NAMES[p.attackerPiece].toLowerCase()} on ${p.attackerSquare}.`,
       severity: isAbsolute ? "high" : "medium",
       highlightSquares: [p.pinnedSquare, p.attackerSquare],
+      previewArrows: [
+        { startSquare: p.attackerSquare, endSquare: p.pinnedSquare, color: "#f97316" },
+        { startSquare: p.pinnedSquare, endSquare: p.pinnedAgainstSquare, color: "#60a5fa" },
+      ],
     });
   }
 
@@ -763,6 +776,10 @@ export const buildThreatCard = (
       description: `${pickThreatMessage("skewer", messageSeed)} Your ${PIECE_NAMES[s.skeweredPiece].toLowerCase()} on ${s.skeweredSquare} is being skewered — if it moves, your ${PIECE_NAMES[s.collateralPiece].toLowerCase()} on ${s.collateralSquare} could be taken.`,
       severity: "high",
       highlightSquares: [s.skeweredSquare, s.attackerSquare],
+      previewArrows: [
+        { startSquare: s.attackerSquare, endSquare: s.skeweredSquare, color: "#f97316" },
+        { startSquare: s.skeweredSquare, endSquare: s.collateralSquare, color: "#60a5fa" },
+      ],
     });
   }
 
@@ -802,6 +819,7 @@ export const buildThreatCard = (
 
   return {
     type: "threat-card",
+    previewFen: game.fen(),
     opponentMoveSan,
     primaryThreat: threats[0],
     allThreats: threats,

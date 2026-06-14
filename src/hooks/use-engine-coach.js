@@ -4,7 +4,7 @@ import { useRef, useCallback } from "react";
 import { getGMThoughtProcess } from "@/lib/ai";
 import { analyzeFullGame } from "@/lib/analyzer";
 import {
-  buildAnalysisMessage,
+  buildAnalysisCard,
   buildBestMoveCard,
   buildHintCard,
   buildLiveAnalysisMessage,
@@ -165,6 +165,7 @@ const useEngineCoach = ({
   setEvalScore,
   setIsLoading,
   setBestMoveArrows,
+  setPreviewSquares,
   setIsAnalyzing,
   setAnalysisProgress,
   setGameReport,
@@ -263,6 +264,7 @@ const useEngineCoach = ({
 
   // ── Manual: Analyze position ─────────────────────────────────────────
   const handleEngineAnalyze = useCallback(async () => {
+    setPreviewSquares?.([]);
     setMessages((previous) => [
       ...previous,
       { role: "user", content: "🔍 Analyze position", type: "engine-query" },
@@ -273,10 +275,10 @@ const useEngineCoach = ({
       const fen = gameRef.current.fen();
       const result = await sf.analyze(fen, 18, 3);
       applyEvalScore(result, fen);
-      const content = buildAnalysisMessage(result, fen);
+      const content = buildAnalysisCard(result, fen);
       setMessages((previous) => [
         ...previous,
-        { role: "assistant", content, type: "engine" },
+        { role: "assistant", content, type: "analysis-card" },
       ]);
     } catch (error) {
       setMessages((previous) => [
@@ -290,10 +292,11 @@ const useEngineCoach = ({
     } finally {
       setIsLoading(false);
     }
-  }, [gameRef, applyEvalScore, setMessages, setIsLoading]);
+  }, [gameRef, applyEvalScore, setMessages, setIsLoading, setPreviewSquares]);
 
   // ── Manual: Best Move ────────────────────────────────────────────────
   const handleEngineBestMove = useCallback(async () => {
+    setPreviewSquares?.([]);
     setMessages((previous) => [
       ...previous,
       { role: "user", content: "💡 Best Move", type: "engine-query" },
@@ -350,7 +353,14 @@ const useEngineCoach = ({
     } finally {
       setIsLoading(false);
     }
-  }, [gameRef, applyEvalScore, setBestMoveArrows, setMessages, setIsLoading]);
+  }, [
+    gameRef,
+    applyEvalScore,
+    setBestMoveArrows,
+    setMessages,
+    setIsLoading,
+    setPreviewSquares,
+  ]);
 
   // ── Manual: Hint ─────────────────────────────────────────────────────
   const handleEngineHint = useCallback(async () => {
@@ -365,6 +375,19 @@ const useEngineCoach = ({
       const result = await sf.analyze(fen, 12, 1);
       const seed = messageSeedReference.current++;
       const card = buildHintCard(result, fen, seed);
+      setPreviewSquares?.(
+        card.fromSquare
+          ? [
+              {
+                square: card.fromSquare,
+                background:
+                  "radial-gradient(circle, rgba(168, 85, 247, 0.32) 55%, rgba(168, 85, 247, 0.16) 56%)",
+                boxShadow:
+                  "inset 0 0 0 3px rgba(168, 85, 247, 0.48)",
+              },
+            ]
+          : [],
+      );
       setMessages((previous) => [
         ...previous,
         { role: "assistant", content: card, type: "hint-card" },
@@ -381,7 +404,7 @@ const useEngineCoach = ({
     } finally {
       setIsLoading(false);
     }
-  }, [gameRef, setMessages, setIsLoading]);
+  }, [gameRef, setMessages, setIsLoading, setPreviewSquares]);
 
   // ── Post-game: Full analysis ───────────────────────────────────────────
   const triggerPostGameAnalysis = useCallback(

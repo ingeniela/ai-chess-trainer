@@ -26,7 +26,7 @@ const getProviderHeaders = (provider = "openai") =>
   provider === "openrouter"
     ? {
         "HTTP-Referer": globalThis.location?.origin || "http://localhost",
-        "X-OpenRouter-Title": "AI Chess Trainer",
+        "X-OpenRouter-Title": "Ai Chess Trainer",
       }
     : {};
 
@@ -310,3 +310,4 @@ Rules:
     throw new Error("AI returned invalid JSON. Please try again.");
   }
 };
+

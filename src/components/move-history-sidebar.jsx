@@ -153,6 +153,8 @@ const MoveHistorySidebar = ({
   evalScore = null,
   onFlipBoard,
   onUndo,
+  onRedo,
+  canRedo = false,
   onCopyPgn,
   moveQuality,
   game,
@@ -260,6 +262,18 @@ const MoveHistorySidebar = ({
         >
           <ChevronLeft className="h-3 w-3" />
           Undo
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRedo}
+          disabled={!canRedo || isReviewMode}
+          title="Redo next move"
+          className="text-muted-foreground h-7 px-2 text-xs"
+        >
+          Redo
+          <ChevronRight className="h-3 w-3" />
         </Button>
 
         {moveHistory.length > 0 && (

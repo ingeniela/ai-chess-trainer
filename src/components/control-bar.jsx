@@ -162,7 +162,7 @@ const ControlBar = ({
     {/* Left — branding */}
     <div className="flex shrink-0 items-center gap-2">
       <span className="whitespace-nowrap text-sm font-bold tracking-tight text-primary sm:text-base">
-        ♟ Chess King
+        Ai Chess Trainer
       </span>
     </div>
 
@@ -232,3 +232,4 @@ const ControlBar = ({
 );
 
 export default ControlBar;
+

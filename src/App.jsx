@@ -4,8 +4,10 @@ import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 
 import BlunderReviewMode from "@/components/blunder-review-mode";
 import BoardPanel, { playSound } from "@/components/board-panel";
+import BoardVisionPanel from "@/components/board-vision-panel";
 import ChatPanel from "@/components/chat-panel";
 import ControlBar from "@/components/control-bar";
+import DailyRoutinePanel from "@/components/daily-routine-panel";
 import EndgameMode from "@/components/endgame-mode";
 import GameReportDialog from "@/components/game-report-dialog";
 import ModeRail from "@/components/mode-rail";
@@ -34,6 +36,20 @@ import {
 } from "@/lib/stockfish";
 
 // ── Local helpers ─────────────────────────────────────────────────────────────
+const EMPTY_BOARD_FEN = "8/8/8/8/8/8/8/8 w - - 0 1";
+const BOARD_FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
+const BOARD_RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"];
+
+const createVisionCard = () => {
+  const square = `${BOARD_FILES[Math.floor(Math.random() * 8)]}${
+    BOARD_RANKS[Math.floor(Math.random() * 8)]
+  }`;
+  return {
+    square,
+    type: "coordinate",
+  };
+};
+
 const getApiKey = () => localStorage.getItem("chess-coach-api-key") || "";
 const getTextApiKey = () =>
   localStorage.getItem("chess-ai-provider") === "openrouter"
@@ -47,6 +63,15 @@ const getStoredBoardColors = () => ({
 
 const getStoredRightSidebarCollapsed = () =>
   localStorage.getItem("chess-right-sidebar-collapsed") === "true";
+
+const getStoredMessages = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem("chess-chat-messages") || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
 
 const normalizeCastlingTarget = (game, sourceSquare, targetSquare) => {
   if (!sourceSquare || !targetSquare) return targetSquare;
@@ -80,8 +105,9 @@ const normalizeCastlingTarget = (game, sourceSquare, targetSquare) => {
 const App = () => {
   const gameReference = useRef(new Chess());
   const [fen, setFen] = useState(gameReference.current.fen());
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(getStoredMessages);
   const [moveHistory, setMoveHistory] = useState([]); // { san, fen, from, to }[]
+  const [redoHistory, setRedoHistory] = useState([]);
   const [viewIndex, setViewIndex] = useState(null);
   const [previewMoveIndex, setPreviewMoveIndex] = useState(null);
   const viewIndexReference = useRef(null);
@@ -98,10 +124,25 @@ const App = () => {
   const [boardOrientation, setBoardOrientation] = useState("white");
   const [boardColors, setBoardColors] = useState(getStoredBoardColors);
   const [activeMode, setActiveMode] = useState("play");
+  const [visionCard, setVisionCard] = useState(createVisionCard);
+  const [visionScore, setVisionScore] = useState(0);
+  const [visionAttempts, setVisionAttempts] = useState(0);
+  const [visionStreak, setVisionStreak] = useState(0);
+  const [visionBestStreak, setVisionBestStreak] = useState(0);
+  const [visionFeedback, setVisionFeedback] = useState(null);
+  const [visionSelection, setVisionSelection] = useState(null);
   const [modeRailCollapsed, setModeRailCollapsed] = useState(false);
   const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(
     getStoredRightSidebarCollapsed,
   );
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chess-chat-messages", JSON.stringify(messages));
+    } catch {
+      /* ignore storage quota/private mode failures */
+    }
+  }, [messages]);
 
   useEffect(() => {
     document.documentElement.lang =
@@ -168,6 +209,8 @@ const App = () => {
   // Shape: { fen: string|null, orientation: string, arrows: [], isTrainingActive: bool }
   const [bestMoveArrows, setBestMoveArrows] = useState([]);
   const [previewArrows, setPreviewArrows] = useState([]);
+  const [previewSquares, setPreviewSquares] = useState([]);
+  const [previewFen, setPreviewFen] = useState(null);
   const [trainingBoard, setTrainingBoard] = useState({
     fen: null,
     orientation: "white",
@@ -180,7 +223,13 @@ const App = () => {
   // ── Training display overrides ────────────────────────────────────────────
   // When learning mode is on and a training scenario is loaded, override the
   // board with the training position.
+  const emptyBoardGame = useMemo(
+    () => new Chess(EMPTY_BOARD_FEN, { skipValidation: true }),
+    [],
+  );
+
   const displayBoardGame = useMemo(() => {
+    if (activeMode === "vision") return emptyBoardGame;
     if (trainingBoard.isTrainingActive && trainingBoard.fen) {
       const g = new Chess();
       try {
@@ -190,8 +239,24 @@ const App = () => {
       }
       return g;
     }
+    if (previewFen) {
+      const g = new Chess();
+      try {
+        g.load(previewFen);
+      } catch {
+        /* ignore */
+      }
+      return g;
+    }
     return displayGame;
-  }, [trainingBoard.isTrainingActive, trainingBoard.fen, displayGame]);
+  }, [
+    activeMode,
+    emptyBoardGame,
+    trainingBoard.isTrainingActive,
+    trainingBoard.fen,
+    previewFen,
+    displayGame,
+  ]);
 
   const displayBoardOrientation = trainingBoard.isTrainingActive
     ? trainingBoard.orientation
@@ -199,13 +264,37 @@ const App = () => {
 
   const displayBoardArrows = trainingBoard.isTrainingActive
     ? trainingBoard.arrows
-    : previewArrows.length > 0
+    : activeMode === "vision"
+      ? []
+      : previewArrows.length > 0
       ? previewArrows
       : bestMoveArrows;
 
+  const visionPreviewSquares = useMemo(() => {
+    if (activeMode !== "vision" || !visionSelection?.square) return [];
+    const isCorrect = visionSelection.correct;
+    return [
+      {
+        square: visionSelection.square,
+        background:
+          isCorrect
+            ? "radial-gradient(circle, rgba(34, 197, 94, 0.42) 55%, rgba(34, 197, 94, 0.2) 56%)"
+            : "radial-gradient(circle, rgba(239, 68, 68, 0.42) 55%, rgba(239, 68, 68, 0.2) 56%)",
+        boxShadow: isCorrect
+          ? "inset 0 0 0 4px rgba(34, 197, 94, 0.65), 0 0 16px rgba(34, 197, 94, 0.35)"
+          : "inset 0 0 0 4px rgba(239, 68, 68, 0.65), 0 0 16px rgba(239, 68, 68, 0.35)",
+      },
+    ];
+  }, [activeMode, visionSelection]);
+
+  const displayPreviewSquares =
+    activeMode === "vision" ? visionPreviewSquares : previewSquares;
+
   const displayBoardLastMove = trainingBoard.isTrainingActive
     ? null
-    : displayLastMoveSquares;
+    : activeMode === "vision"
+      ? null
+      : displayLastMoveSquares;
 
   const aiTimeoutReference = useRef(null);
   const [savedGamesOpen, setSavedGamesOpen] = useState(false);
@@ -282,6 +371,7 @@ const App = () => {
     setEvalScore,
     setIsLoading,
     setBestMoveArrows,
+    setPreviewSquares,
     setIsAnalyzing,
     setAnalysisProgress,
     setGameReport,
@@ -296,9 +386,12 @@ const App = () => {
       gameReference.current = game;
       setFen(game.fen());
       setMoveHistory([]);
+      setRedoHistory([]);
       setLastMoveSquares(null);
       setBestMoveArrows([]);
       setPreviewArrows([]);
+      setPreviewSquares([]);
+      setPreviewFen(null);
       setPreviewMoveIndex(null);
     } catch {
       // ignore invalid FEN from AI
@@ -309,6 +402,7 @@ const App = () => {
     try {
       const move = gameReference.current.move(san);
       if (move) {
+        setRedoHistory([]);
         const newFen = gameReference.current.fen();
         setFen(newFen);
         setMoveHistory((previous) => [
@@ -378,6 +472,7 @@ const App = () => {
           gameReference.current = game;
           setFen(game.fen());
           setMoveHistory(migrateMoveHistory(saved.moveHistory));
+          setRedoHistory([]);
           if (saved.boardOrientation) {
             setBoardOrientation(saved.boardOrientation);
           }
@@ -441,9 +536,12 @@ const App = () => {
         gameReference.current = game;
         setFen(game.fen());
         setMoveHistory(migrateMoveHistory(saved.moveHistory || []));
+        setRedoHistory([]);
         setMoveQuality(null);
         setMessages([]);
         setIsAIThinking(false);
+        setPreviewFen(null);
+        setPreviewArrows([]);
         setEvalScore(null);
         setGameReport(null);
         setIsAnalyzing(false);
@@ -654,10 +752,25 @@ const App = () => {
     setViewIndex(null);
   }, []);
   const handlePreviewHistoryMove = useCallback((index) => {
+    setPreviewFen(null);
+    setPreviewSquares([]);
     setPreviewMoveIndex(index);
-  }, []);
+    const entry = moveHistory[index];
+    if (entry?.from && entry?.to) {
+      setPreviewArrows([
+        {
+          startSquare: entry.from,
+          endSquare: entry.to,
+          color: "#22c55e",
+        },
+      ]);
+    }
+  }, [moveHistory]);
   const handleClearHistoryPreview = useCallback(() => {
     setPreviewMoveIndex(null);
+    setPreviewFen(null);
+    setPreviewArrows([]);
+    setPreviewSquares([]);
   }, []);
 
   const handleNavigateBack = useCallback(() => {
@@ -705,7 +818,7 @@ const App = () => {
 
   // ── Reset training state when switching TO live mode ────────────────────
   useEffect(() => {
-    if (isLiveMode) {
+    if (isLiveMode || activeMode !== "training") {
       trainingHandlerReference.current = null;
       setTrainingBoard({
         fen: null,
@@ -714,7 +827,7 @@ const App = () => {
         isTrainingActive: false,
       });
     }
-  }, [isLiveMode]);
+  }, [isLiveMode, activeMode]);
 
   // ── Training board callbacks ─────────────────────────────────────────────
   const handleTrainingBoardUpdate = useCallback((state) => {
@@ -730,7 +843,7 @@ const App = () => {
     trainingHandlerReference.current = function_ ?? null;
   }, []);
 
-  const handlePreviewLine = useCallback((startFen, moves) => {
+  const handlePreviewLine = useCallback((startFen, moves, squares = []) => {
     if (!startFen || !Array.isArray(moves) || moves.length === 0) return;
 
     try {
@@ -745,14 +858,27 @@ const App = () => {
           color: index === 0 ? "#22c55e" : "#60a5fa",
         });
       }
+      setPreviewFen(previewGame.fen());
       setPreviewArrows(nextArrows);
+      setPreviewSquares(squares);
     } catch {
+      setPreviewFen(null);
       setPreviewArrows([]);
+      setPreviewSquares([]);
     }
   }, []);
 
+  const handlePreviewPosition = useCallback((fen, arrows = [], squares = []) => {
+    if (!fen) return;
+    setPreviewFen(fen);
+    setPreviewArrows(arrows);
+    setPreviewSquares(squares);
+  }, []);
+
   const handleClearPreviewLine = useCallback(() => {
+    setPreviewFen(null);
     setPreviewArrows([]);
+    setPreviewSquares([]);
   }, []);
 
   // ── Make a board move ────────────────────────────────────────────────────
@@ -835,6 +961,7 @@ const App = () => {
       }
       if (!move) return false;
 
+      setRedoHistory([]);
       setFen(game.fen());
       setMoveHistory((previous) => [
         ...previous,
@@ -844,6 +971,7 @@ const App = () => {
       setLastMoveSquares({ from: sourceSquare, to: actualTargetSquare });
       setBestMoveArrows([]);
       setPreviewArrows([]);
+      setPreviewSquares([]);
       clockReference.current.addIncrement(move.color);
       setPremove(null);
       premoveReference.current = null;
@@ -929,11 +1057,18 @@ const App = () => {
   // ── Undo ─────────────────────────────────────────────────────────────────
   const handleUndo = useCallback(() => {
     setViewIndex(null);
+    setPreviewMoveIndex(null);
+    setPreviewFen(null);
+    setPreviewArrows([]);
     const game = gameReference.current;
+    const lastEntry = moveHistory.at(-1);
     const undone = game.undo();
     if (undone) {
       setFen(game.fen());
       setMoveHistory((previous) => previous.slice(0, -1));
+      if (lastEntry) {
+        setRedoHistory((previous) => [lastEntry, ...previous]);
+      }
       setMoveQuality(null);
       const history = game.history({ verbose: true });
       if (history.length > 0) {
@@ -944,7 +1079,42 @@ const App = () => {
       }
       playSound("move");
     }
-  }, []);
+  }, [moveHistory]);
+
+  const handleRedo = useCallback(() => {
+    if (redoHistory.length === 0 || viewIndexReference.current !== null) return;
+
+    const [nextEntry, ...remaining] = redoHistory;
+    const game = gameReference.current;
+    let move = null;
+    try {
+      move = game.move(nextEntry.san);
+    } catch {
+      move = null;
+    }
+    if (!move) {
+      setRedoHistory(remaining);
+      return;
+    }
+
+    const entry = {
+      san: move.san,
+      fen: game.fen(),
+      from: move.from,
+      to: move.to,
+    };
+    setRedoHistory(remaining);
+    setFen(game.fen());
+    setMoveHistory((previous) => [...previous, entry]);
+    setMoveQuality(null);
+    setLastMoveSquares({ from: move.from, to: move.to });
+    setBestMoveArrows([]);
+    setPreviewFen(null);
+    setPreviewArrows([]);
+    setPreviewSquares([]);
+    playSound(move.captured ? "capture" : game.inCheck() ? "check" : "move");
+    updateEvalBar(game.fen());
+  }, [redoHistory, updateEvalBar]);
 
   // ── New game ─────────────────────────────────────────────────────────────
   const handleNewGame = useCallback(() => {
@@ -953,8 +1123,10 @@ const App = () => {
     gameReference.current = new Chess();
     setFen(gameReference.current.fen());
     setMoveHistory([]);
+    setRedoHistory([]);
     setViewIndex(null);
     setPreviewMoveIndex(null);
+    setPreviewFen(null);
     setMoveQuality(null);
     setMessages([]);
     setLastMoveSquares(null);
@@ -962,6 +1134,7 @@ const App = () => {
     setEvalScore(null);
     setBestMoveArrows([]);
     setPreviewArrows([]);
+    setPreviewSquares([]);
     setGameReport(null);
     setIsAnalyzing(false);
     setAnalysisProgress(0);
@@ -996,8 +1169,10 @@ const App = () => {
           return { san: m.san, fen: temporaryG.fen(), from: m.from, to: m.to };
         });
         setMoveHistory(newHistory);
+        setRedoHistory([]);
         setViewIndex(null);
         setPreviewMoveIndex(null);
+        setPreviewFen(null);
         setBestMoveArrows([]);
         setPreviewArrows([]);
         setMoveQuality(null);
@@ -1062,6 +1237,57 @@ const App = () => {
   );
 
   // ── Pre-warm Stockfish ───────────────────────────────────────────────────
+  const nextVisionCard = useCallback(() => {
+    setVisionCard(createVisionCard());
+    setVisionFeedback(null);
+    setVisionSelection(null);
+  }, []);
+
+  const recordVisionAnswer = useCallback((square, correct, message) => {
+    setVisionAttempts((value) => value + 1);
+    setVisionFeedback({ correct, message });
+    setVisionSelection({ square, correct });
+    if (correct) {
+      setVisionScore((value) => value + 1);
+      setVisionStreak((value) => {
+        const next = value + 1;
+        setVisionBestStreak((best) => Math.max(best, next));
+        return next;
+      });
+      window.setTimeout(() => {
+        setVisionCard(createVisionCard());
+        setVisionFeedback(null);
+        setVisionSelection(null);
+      }, 650);
+    } else {
+      setVisionStreak(0);
+    }
+  }, []);
+
+  const handleVisionSquareSelect = useCallback(
+    (square) => {
+      if (visionCard.type !== "coordinate") return;
+      const correct = square === visionCard.square;
+      recordVisionAnswer(
+        square,
+        correct,
+        correct
+          ? `Correct: ${visionCard.square}.`
+          : `Not ${square}. Find ${visionCard.square}.`,
+      );
+    },
+    [recordVisionAnswer, visionCard],
+  );
+
+  const resetVisionDrill = useCallback(() => {
+    setVisionCard(createVisionCard());
+    setVisionScore(0);
+    setVisionAttempts(0);
+    setVisionStreak(0);
+    setVisionBestStreak(0);
+    setVisionFeedback(null);
+    setVisionSelection(null);
+  }, []);
   useEffect(() => {
     if (opponent === "engine") {
       getStockfishEngine().init().catch(console.error);
@@ -1084,6 +1310,32 @@ const App = () => {
     setPuzzleOpen(false);
   }, []);
 
+  const handleStartRoutineTask = useCallback((target) => {
+    setRightSidebarCollapsed(false);
+    if (target === "vision") {
+      setActiveMode("vision");
+      setIsLiveMode(false);
+      setPuzzleOpen(false);
+      return;
+    }
+    if (target === "tactics") {
+      setActiveMode("challenges");
+      setIsLiveMode(true);
+      setPuzzleOpen(true);
+      return;
+    }
+    if (target === "review") {
+      setActiveMode("play");
+      setCoachMode("engine");
+      setIsLiveMode(true);
+      setPuzzleOpen(false);
+      return;
+    }
+    setActiveMode("play");
+    setIsLiveMode(true);
+    setPuzzleOpen(false);
+  }, []);
+
   const moveHistoryPanel = (
     <MoveHistorySidebar
       game={gameReference.current}
@@ -1099,6 +1351,8 @@ const App = () => {
         setBoardOrientation((o) => (o === "white" ? "black" : "white"))
       }
       onUndo={handleUndo}
+      onRedo={handleRedo}
+      canRedo={redoHistory.length > 0}
       onCopyPgn={handleCopyPgn}
       isAnalyzing={isAnalyzing}
       analysisProgress={analysisProgress}
@@ -1143,7 +1397,7 @@ const App = () => {
         style={{
           "--app-grid-columns": modeRailCollapsed
             ? `56px minmax(0,1fr) ${rightSidebarCollapsed ? "48px" : "440px"}`
-            : `168px minmax(0,1fr) ${rightSidebarCollapsed ? "48px" : "440px"}`,
+            : `196px minmax(0,1fr) ${rightSidebarCollapsed ? "48px" : "440px"}`,
         }}
       >
         <ModeRail
@@ -1167,6 +1421,12 @@ const App = () => {
               effectiveViewIndex !== null && !trainingBoard.isTrainingActive
             }
             arrows={displayBoardArrows}
+            previewSquares={displayPreviewSquares}
+            onSquareSelect={
+              activeMode === "vision" ? handleVisionSquareSelect : null
+            }
+            hideHud={activeMode === "vision"}
+            hideStatus={activeMode === "vision"}
             premove={premove}
             playerColor={playerColor}
             onPlayerColorChange={handlePlayerColorChange}
@@ -1184,22 +1444,35 @@ const App = () => {
             <div className="flex h-full items-start justify-center pt-3">
               <button
                 onClick={() => setRightSidebarCollapsed(false)}
-                className="rounded-md border border-border bg-secondary px-2 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-secondary"
                 title="Open right sidebar"
               >
-                ‹
+                Open
               </button>
             </div>
           ) : (
             <>
               <button
                 onClick={() => setRightSidebarCollapsed(true)}
-                className="absolute right-2 top-2 z-20 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                className="absolute right-3 top-14 z-50 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-md transition-colors hover:bg-secondary"
                 title="Close right sidebar"
               >
-                ›
+                Close
               </button>
-              {activeMode === "training" ? (
+              {activeMode === "daily" ? (
+                <DailyRoutinePanel onStartTask={handleStartRoutineTask} />
+              ) : activeMode === "vision" ? (
+                <BoardVisionPanel
+                  card={visionCard}
+                  score={visionScore}
+                  attempts={visionAttempts}
+                  streak={visionStreak}
+                  bestStreak={visionBestStreak}
+                  feedback={visionFeedback}
+                  onNext={nextVisionCard}
+                  onReset={resetVisionDrill}
+                />
+              ) : activeMode === "training" ? (
                 <TrainingPanel
                   onBoardUpdate={handleTrainingBoardUpdate}
                   onRegisterMoveHandler={handleRegisterMoveHandler}
@@ -1231,6 +1504,7 @@ const App = () => {
                   tokenStats={tokenStats}
                   historyPanel={moveHistoryPanel}
                   onPreviewLine={handlePreviewLine}
+                  onPreviewPosition={handlePreviewPosition}
                   onClearPreview={handleClearPreviewLine}
                   onJumpToMove={handleJumpToMove}
                 />
@@ -1291,3 +1565,5 @@ const App = () => {
 };
 
 export default App;
+
+
