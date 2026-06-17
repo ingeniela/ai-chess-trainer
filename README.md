@@ -1,4 +1,4 @@
-pus<div align="center">
+<div align="center">
 
 # AI Chess Trainer
 
@@ -27,6 +27,16 @@ learn from the move.
 The app runs in the browser with React, Vite, chess.js, a Stockfish 18 WASM
 engine, local IndexedDB storage, and optional AI coach integrations. There is no
 custom backend required.
+
+## Project History
+
+AI Chess Trainer was originally created by [Iamsdt](https://github.com/Iamsdt)
+and is now maintained by [ingeniela](https://github.com/ingeniela). The current
+repository is:
+
+```text
+https://github.com/ingeniela/ai-chess-trainer
+```
 
 ## Recent Highlights
 
@@ -177,7 +187,7 @@ AI Chess Trainer is designed as a client-side application:
 ### Install
 
 ```bash
-git clone https://github.com/Iamsdt/ai-chess-trainer.git
+git clone https://github.com/ingeniela/ai-chess-trainer.git
 cd ai-chess-trainer
 npm install
 ```
