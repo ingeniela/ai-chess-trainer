@@ -1,5 +1,6 @@
 /* eslint-disable max-lines-per-function */
 import { Chess } from "chess.js";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 
 import BlunderReviewMode from "@/components/blunder-review-mode";
@@ -1512,7 +1513,7 @@ const App = () => {
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-screen">
+    <div className="relative h-screen overflow-hidden bg-background">
       <ControlBar
         onNewGame={handleNewGame}
         onEndGame={handleEndGame}
@@ -1538,7 +1539,7 @@ const App = () => {
       />
 
       <div
-        className="grid flex-1 grid-cols-1 grid-rows-[auto_auto_620px] overflow-y-auto lg:grid-cols-[var(--app-grid-columns)] lg:grid-rows-none lg:overflow-hidden"
+        className="grid h-full grid-cols-1 grid-rows-[auto_auto_620px] overflow-y-auto lg:grid-cols-[var(--app-grid-columns)] lg:grid-rows-none lg:overflow-hidden"
         style={{
           "--app-grid-columns": modeRailCollapsed
             ? `56px minmax(0,1fr) ${rightSidebarCollapsed ? "48px" : "440px"}`
@@ -1595,20 +1596,22 @@ const App = () => {
                 <div className="flex h-full items-start justify-center pt-3">
                   <button
                     onClick={() => setRightSidebarCollapsed(false)}
-                    className="rounded-md border border-border bg-card px-2 py-1.5 text-xs font-semibold text-foreground shadow-sm transition-colors hover:bg-secondary"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     title="Open right sidebar"
+                    aria-label="Open right sidebar"
                   >
-                    Open
+                    <PanelRightOpen className="h-4 w-4" />
                   </button>
                 </div>
               ) : (
                 <>
                   <button
                     onClick={() => setRightSidebarCollapsed(true)}
-                    className="absolute right-3 top-14 z-50 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground shadow-md transition-colors hover:bg-secondary"
+                    className="absolute right-2 top-12 z-50 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                     title="Close right sidebar"
+                    aria-label="Close right sidebar"
                   >
-                    Close
+                    <PanelRightClose className="h-4 w-4" />
                   </button>
                   {activeMode === "vision" ? (
                     <BoardVisionPanel

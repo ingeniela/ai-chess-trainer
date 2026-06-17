@@ -152,9 +152,9 @@ const ControlBar = ({
   onDifficultyChange,
   // Train
 }) => (
-  <div className="relative z-30 flex items-center gap-2 overflow-x-auto overflow-y-visible border-b border-border bg-card px-2 py-2 sm:px-4 lg:justify-between">
+  <div className="pointer-events-none fixed left-1/2 top-3 z-50 w-[calc(100%-1rem)] max-w-max -translate-x-1/2 px-2 sm:w-auto">
     {/* Center — controls */}
-    <div className="flex min-w-max items-center gap-2 lg:min-w-0 lg:flex-wrap">
+    <div className="pointer-events-auto flex max-w-full items-center justify-center gap-2 overflow-x-auto rounded-lg border border-border/70 bg-card/95 px-2 py-2 shadow-xl backdrop-blur sm:px-3">
       {/* Opponent selector */}
       <Dropdown
         label="Opponent"
@@ -218,8 +218,6 @@ const ControlBar = ({
       /> */}
     </div>
 
-    {/* Right — dark mode + settings */}
-    <div className="shrink-0" />
   </div>
 );
 
