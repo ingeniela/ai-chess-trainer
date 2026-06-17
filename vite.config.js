@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/chess/' : '/',
+  base: command === 'build' ? '/ai-chess-trainer/' : '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

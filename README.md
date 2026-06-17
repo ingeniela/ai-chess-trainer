@@ -230,8 +230,12 @@ npm run build
 npm run preview
 ```
 
-The Vite production base path is `/chess/`, so the build is configured for a
-GitHub Pages deployment at that repository path.
+The Vite production base path is `/ai-chess-trainer/`, so the build is
+configured for the current GitHub Pages URL:
+
+```text
+https://ingeniela.github.io/ai-chess-trainer/
+```
 
 ## GitHub Pages Deployment
 
