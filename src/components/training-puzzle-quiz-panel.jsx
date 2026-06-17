@@ -17,6 +17,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { compareByDifficulty } from "@/lib/difficulty-order";
 import { TYPE_QUIZ } from "@/lib/progress";
 import { loadQuizByFile, loadQuizCatalog } from "@/lib/puzzle-quizzes";
 import useProgressStore from "@/store/use-progress-store";
@@ -423,24 +424,26 @@ const TrainingPuzzleQuizPanel = ({
     setQuizError("");
   };
 
-  const displayed = catalog.filter((entry) => {
-    const matchesDifficulty =
-      difficultyFilter === "all" || entry.difficulty === difficultyFilter;
-    const query = searchQuery.trim().toLowerCase();
-    const matchesSearch =
-      !query ||
-      [entry.title, entry.description, entry.theme]
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
+  const displayed = catalog
+    .filter((entry) => {
+      const matchesDifficulty =
+        difficultyFilter === "all" || entry.difficulty === difficultyFilter;
+      const query = searchQuery.trim().toLowerCase();
+      const matchesSearch =
+        !query ||
+        [entry.title, entry.description, entry.theme]
+          .join(" ")
+          .toLowerCase()
+          .includes(query);
 
-    const matchesSolve =
-      solveFilter === "all" ||
-      (solveFilter === "solved" && isSolved(entry.id, TYPE_QUIZ)) ||
-      (solveFilter === "unsolved" && !isSolved(entry.id, TYPE_QUIZ));
+      const matchesSolve =
+        solveFilter === "all" ||
+        (solveFilter === "solved" && isSolved(entry.id, TYPE_QUIZ)) ||
+        (solveFilter === "unsolved" && !isSolved(entry.id, TYPE_QUIZ));
 
-    return matchesDifficulty && matchesSearch && matchesSolve;
-  });
+      return matchesDifficulty && matchesSearch && matchesSolve;
+    })
+    .sort(compareByDifficulty);
 
   const solvedCount = getSolvedCount(TYPE_QUIZ);
 

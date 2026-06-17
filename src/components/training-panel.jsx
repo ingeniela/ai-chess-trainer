@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ENDGAMES } from "@/data/endgames";
 import { getPuzzleSession, PUZZLES } from "@/data/puzzles";
+import { compareByDifficulty } from "@/lib/difficulty-order";
 import { OPENINGS } from "@/lib/openings";
 import { TYPE_PUZZLE, TYPE_OPENING } from "@/lib/progress";
 import useProgressStore from "@/store/use-progress-store";
@@ -503,7 +504,8 @@ const PuzzleTrainer = ({ onBoardUpdate, onRegisterMoveHandler, onBack }) => {
       if (solveFilter === "solved") return isSolved(p.id, TYPE_PUZZLE);
       if (solveFilter === "unsolved") return !isSolved(p.id, TYPE_PUZZLE);
       return true;
-    });
+    })
+    .sort(compareByDifficulty);
 
   const solvedCount = getSolvedCount(TYPE_PUZZLE);
 
@@ -1533,7 +1535,7 @@ const EndgameTrainer = ({
   const categories = ["all", ...new Set(ENDGAMES.map((e) => e.category))];
   const filtered = ENDGAMES.filter(
     (e) => catFilter === "all" || e.category === catFilter,
-  );
+  ).sort(compareByDifficulty);
 
   // ── LIST ──────────────────────────────────────────────────────────────────
   if (phase === "list") {

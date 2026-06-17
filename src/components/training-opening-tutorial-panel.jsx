@@ -16,6 +16,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { compareByDifficulty } from "@/lib/difficulty-order";
 import {
   loadTutorialByFile,
   loadTutorialCatalog,
@@ -484,7 +485,8 @@ const TrainingOpeningTutorialPanel = ({
       if (solveFilter === "solved") return isSolved(entry.id, TYPE_TUTORIAL);
       if (solveFilter === "unsolved") return !isSolved(entry.id, TYPE_TUTORIAL);
       return true;
-    });
+    })
+    .sort(compareByDifficulty);
 
   const solvedCount = getSolvedCount(TYPE_TUTORIAL);
 
