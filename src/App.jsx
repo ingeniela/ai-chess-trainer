@@ -1515,29 +1515,31 @@ const App = () => {
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="relative h-screen overflow-hidden bg-background">
-      <ControlBar
-        onNewGame={handleNewGame}
-        onEndGame={handleEndGame}
-        canEndGame={
-          moveHistory.length > 0 &&
-          !gameReference.current.isGameOver() &&
-          !manualGameEnded
-        }
-        opponent={opponent}
-        onOpponentChange={setOpponent}
-        difficulty={difficulty}
-        onDifficultyChange={setDifficulty}
-        isGameInProgress={moveHistory.length > 0}
-        onSetPosition={() => setPositionSetupOpen(true)}
-        onOpenPuzzles={() => setPuzzleOpen(true)}
-        onOpenOpeningDrill={() => setOpeningDrillOpen(true)}
-        onOpenEndgame={() => setEndgameOpen(true)}
-        onOpenOpeningStats={() => setOpeningStatsOpen(true)}
-        clockEnabled={clockEnabled}
-        clockTimeControl={clockTimeControl}
-        onToggleClock={() => setClockEnabled((enabled) => !enabled)}
-        onSetTimeControl={setClockTimeControl}
-      />
+      {activeMode === "play" && (
+        <ControlBar
+          onNewGame={handleNewGame}
+          onEndGame={handleEndGame}
+          canEndGame={
+            moveHistory.length > 0 &&
+            !gameReference.current.isGameOver() &&
+            !manualGameEnded
+          }
+          opponent={opponent}
+          onOpponentChange={setOpponent}
+          difficulty={difficulty}
+          onDifficultyChange={setDifficulty}
+          isGameInProgress={moveHistory.length > 0}
+          onSetPosition={() => setPositionSetupOpen(true)}
+          onOpenPuzzles={() => setPuzzleOpen(true)}
+          onOpenOpeningDrill={() => setOpeningDrillOpen(true)}
+          onOpenEndgame={() => setEndgameOpen(true)}
+          onOpenOpeningStats={() => setOpeningStatsOpen(true)}
+          clockEnabled={clockEnabled}
+          clockTimeControl={clockTimeControl}
+          onToggleClock={() => setClockEnabled((enabled) => !enabled)}
+          onSetTimeControl={setClockTimeControl}
+        />
+      )}
 
       <div
         className="grid h-full grid-cols-1 grid-rows-[auto_auto_620px] overflow-y-auto lg:grid-cols-[var(--app-grid-columns)] lg:grid-rows-none lg:overflow-hidden"
