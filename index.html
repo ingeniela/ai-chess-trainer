@@ -5,11 +5,11 @@
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Chess Trainer</title>
-    <!-- Apply dark class immediately to avoid flash of light theme -->
+    <!-- Apply saved dark preference immediately to avoid theme flash -->
     <script>
       (function () {
         var saved = localStorage.getItem("chess-dark-mode");
-        var dark = saved !== null ? saved === "true" : true;
+        var dark = saved === "true";
         if (dark) document.documentElement.classList.add("dark");
       })();
     </script>

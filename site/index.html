@@ -5,11 +5,11 @@
     <link rel="icon" type="image/svg+xml" href="/ai-chess-trainer/site/assets/favicon-s6nHwKXS.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Chess Trainer</title>
-    <!-- Apply dark class immediately to avoid flash of light theme -->
+    <!-- Apply saved dark preference immediately to avoid theme flash -->
     <script>
       (function () {
         var saved = localStorage.getItem("chess-dark-mode");
-        var dark = saved !== null ? saved === "true" : true;
+        var dark = saved === "true";
         if (dark) document.documentElement.classList.add("dark");
       })();
     </script>
@@ -22,7 +22,7 @@
         location.replace("/ai-chess-trainer/site/");
       }
     </script>
-    <script type="module" crossorigin src="/ai-chess-trainer/site/assets/index-Dl1X8PrJ.js"></script>
+    <script type="module" crossorigin src="/ai-chess-trainer/site/assets/index-Cyes7Hcd.js"></script>
     <link rel="stylesheet" crossorigin href="/ai-chess-trainer/site/assets/index-Bv0_c3hM.css">
   </head>
   <body>

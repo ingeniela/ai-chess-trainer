@@ -4,13 +4,13 @@ import { useState, useEffect, useCallback } from "react";
  * Manages dark / light mode.
  * - Persists the preference in localStorage under "chess-dark-mode"
  * - Applies / removes the `dark` CSS class on <html>
- * - Defaults to dark mode if no preference has been saved
+ * - Defaults to light mode if no preference has been saved
  */
 const useDarkMode = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem("chess-dark-mode");
-    // Saved preference wins; first visit defaults to dark
-    return saved !== null ? saved === "true" : true;
+    // Saved preference wins; first visit defaults to light.
+    return saved !== null ? saved === "true" : false;
   });
 
   useEffect(() => {
