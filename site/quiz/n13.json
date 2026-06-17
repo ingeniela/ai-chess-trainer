@@ -1,0 +1,10 @@
+{
+  "kind": "quiz",
+  "id": "n13",
+  "title": "Promotion With Check",
+  "fen": "7k/P6p/8/8/8/8/7P/6K1 w - - 0 1",
+  "solution": ["a7a8q"],
+  "theme": "promotion",
+  "difficulty": "medium",
+  "description": "White to move - promote with check and make the new queen count."
+}

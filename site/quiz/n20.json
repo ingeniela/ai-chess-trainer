@@ -1,0 +1,10 @@
+{
+  "kind": "quiz",
+  "id": "n20",
+  "title": "Promotion Race Tactic",
+  "fen": "7k/P5pp/8/8/8/8/6PP/6K1 w - - 0 1",
+  "solution": ["a7a8q"],
+  "theme": "promotion",
+  "difficulty": "hard",
+  "description": "White to move - promote before Black can organize counterplay."
+}

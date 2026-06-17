@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Chess Trainer</title>
     <!-- Apply dark class immediately to avoid flash of light theme -->
@@ -12,6 +12,15 @@
         var dark = saved !== null ? saved === "true" : true;
         if (dark) document.documentElement.classList.add("dark");
       })();
+    </script>
+    <script>
+      var viteBaseUrl = "%BASE_URL%";
+      if (
+        location.hostname.endsWith("github.io") &&
+        viteBaseUrl.charAt(0) === "%"
+      ) {
+        location.replace("/ai-chess-trainer/site/");
+      }
     </script>
   </head>
   <body>

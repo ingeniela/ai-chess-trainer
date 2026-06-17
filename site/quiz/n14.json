@@ -1,0 +1,10 @@
+{
+  "kind": "quiz",
+  "id": "n14",
+  "title": "Knight Fork From Center",
+  "fen": "4k3/7q/8/8/4N3/8/8/4K3 w - - 0 1",
+  "solution": ["e4f6"],
+  "theme": "fork",
+  "difficulty": "medium",
+  "description": "White to move - use the centralized knight to fork king and queen."
+}
