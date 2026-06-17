@@ -21,6 +21,7 @@ import PuzzleMode from "@/components/puzzle-mode";
 import SettingsDialog from "@/components/settings-dialog";
 import TrainingOpeningTutorialPanel from "@/components/training-opening-tutorial-panel";
 import TrainingPanel from "@/components/training-panel";
+import { Toaster } from "@/components/ui/sonner";
 import useAiChat from "@/hooks/use-ai-chat";
 import { useChessClock, TIME_CONTROLS } from "@/hooks/use-chess-clock";
 import useDarkMode from "@/hooks/use-dark-mode";
@@ -1720,6 +1721,7 @@ const App = () => {
         open={openingStatsOpen}
         onClose={() => setOpeningStatsOpen(false)}
       />
+      <Toaster richColors closeButton position="bottom-right" />
     </div>
   );
 };

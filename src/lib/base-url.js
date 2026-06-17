@@ -6,11 +6,18 @@ export const withBaseUrl = (path) => {
   }
 
   const baseUrl = import.meta.env.BASE_URL || "/";
-  if (baseUrl !== "/" && value.startsWith(baseUrl)) {
-    return value;
+  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  const baseWithoutLeadingSlash = normalizedBase.replace(/^\/+/, "");
+  let normalizedPath = value.replace(/^\.?\//, "").replace(/^\/+/, "");
+
+  while (
+    baseWithoutLeadingSlash &&
+    normalizedPath.startsWith(baseWithoutLeadingSlash)
+  ) {
+    normalizedPath = normalizedPath
+      .slice(baseWithoutLeadingSlash.length)
+      .replace(/^\/+/, "");
   }
 
-  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-  const normalizedPath = value.replace(/^\.?\//, "").replace(/^\/+/, "");
   return `${normalizedBase}${normalizedPath}`;
 };

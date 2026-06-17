@@ -1,4 +1,5 @@
 import { withBaseUrl } from "./base-url.js";
+import { showCopyableErrorToast } from "./error-toast.js";
 
 const QUIZ_INDEX_PATH = withBaseUrl("quiz/index.json");
 
@@ -16,12 +17,17 @@ const normalizeFilePath = (file) => {
 };
 
 const readJson = async (path) => {
-  const response = await fetch(path);
-  if (!response.ok) {
-    throw new Error(`Failed to load ${path}.`);
-  }
+  try {
+    const response = await fetch(path);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${path}.`);
+    }
 
-  return response.json();
+    return await response.json();
+  } catch (error) {
+    showCopyableErrorToast("Quiz asset failed to load", error);
+    throw error;
+  }
 };
 
 const normalizeCatalogItem = (item) => ({

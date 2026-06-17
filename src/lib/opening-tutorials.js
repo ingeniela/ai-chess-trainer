@@ -1,4 +1,5 @@
 import { withBaseUrl } from "./base-url.js";
+import { showCopyableErrorToast } from "./error-toast.js";
 
 const TUTORIAL_INDEX_PATH = withBaseUrl("tutorial/index.json");
 
@@ -68,12 +69,17 @@ const normalizeCatalogItem = (item) => ({
 });
 
 const readJson = async (path) => {
-  const response = await fetch(path);
-  if (!response.ok) {
-    throw new Error(`Failed to load ${path}.`);
-  }
+  try {
+    const response = await fetch(path);
+    if (!response.ok) {
+      throw new Error(`Failed to load ${path}.`);
+    }
 
-  return response.json();
+    return await response.json();
+  } catch (error) {
+    showCopyableErrorToast("Tutorial asset failed to load", error);
+    throw error;
+  }
 };
 
 export const normalizeTutorial = (tutorial) => {
