@@ -1,26 +1,21 @@
 /* eslint-disable max-lines-per-function */
 import { Chess } from "chess.js";
 import { PanelRightClose, PanelRightOpen } from "lucide-react";
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import {
+  lazy,
+  Suspense,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 
-import BlunderReviewMode from "@/components/blunder-review-mode";
 import BoardPanel, { playSound } from "@/components/board-panel";
-import BoardVisionPanel from "@/components/board-vision-panel";
 import ChatPanel from "@/components/chat-panel";
 import ControlBar from "@/components/control-bar";
-import DailyRoutinePanel from "@/components/daily-routine-panel";
-import DatabasePanel from "@/components/database-panel";
-import EndgameMode from "@/components/endgame-mode";
-import GameReportDialog from "@/components/game-report-dialog";
 import ModeRail from "@/components/mode-rail";
 import MoveHistorySidebar from "@/components/move-history-sidebar";
-import OpeningDrillMode from "@/components/opening-drill-mode";
-import OpeningStatsPanel from "@/components/opening-stats-panel";
-import PositionSetupDialog from "@/components/position-setup-dialog";
-import PuzzleMode from "@/components/puzzle-mode";
-import SettingsDialog from "@/components/settings-dialog";
-import TrainingOpeningTutorialPanel from "@/components/training-opening-tutorial-panel";
-import TrainingPanel from "@/components/training-panel";
 import { Toaster } from "@/components/ui/sonner";
 import useAiChat from "@/hooks/use-ai-chat";
 import { useChessClock, TIME_CONTROLS } from "@/hooks/use-chess-clock";
@@ -37,6 +32,54 @@ import {
   destroyStockfishEngine,
   StockfishEngine,
 } from "@/lib/stockfish";
+
+// ── Lazily loaded views (kept out of the initial bundle) ──────────────────────
+const BlunderReviewMode = lazy(
+  () => import("@/components/blunder-review-mode"),
+);
+const BoardVisionPanel = lazy(() => import("@/components/board-vision-panel"));
+const DailyRoutinePanel = lazy(
+  () => import("@/components/daily-routine-panel"),
+);
+const DatabasePanel = lazy(() => import("@/components/database-panel"));
+const EndgameMode = lazy(() => import("@/components/endgame-mode"));
+const GameReportDialog = lazy(() => import("@/components/game-report-dialog"));
+const OpeningDrillMode = lazy(() => import("@/components/opening-drill-mode"));
+const OpeningStatsPanel = lazy(
+  () => import("@/components/opening-stats-panel"),
+);
+const PositionSetupDialog = lazy(
+  () => import("@/components/position-setup-dialog"),
+);
+const PuzzleMode = lazy(() => import("@/components/puzzle-mode"));
+const SettingsDialog = lazy(() => import("@/components/settings-dialog"));
+const TrainingOpeningTutorialPanel = lazy(
+  () => import("@/components/training-opening-tutorial-panel"),
+);
+const TrainingPanel = lazy(() => import("@/components/training-panel"));
+
+const PanelFallback = () => (
+  <div
+    className="flex h-full min-h-40 items-center justify-center text-sm text-muted-foreground"
+    role="status"
+    aria-live="polite"
+  >
+    <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+    Loading…
+  </div>
+);
+
+/**
+ * Returns true once `open` has been true at least once, so dialogs are only
+ * downloaded when first needed but keep their close animation afterwards.
+ * @param {boolean} open - Current open state
+ * @returns {boolean} Whether the dialog should be mounted
+ */
+const useMountOnceOpened = (open) => {
+  const [mounted, setMounted] = useState(open);
+  if (open && !mounted) setMounted(true);
+  return mounted;
+};
 
 // ── Local helpers ─────────────────────────────────────────────────────────────
 const EMPTY_BOARD_FEN = "8/8/8/8/8/8/8/8 w - - 0 1";
@@ -1512,6 +1555,11 @@ const App = () => {
     />
   );
 
+  const settingsMounted = useMountOnceOpened(settingsOpen);
+  const gameReportMounted = useMountOnceOpened(gameReportOpen);
+  const positionSetupMounted = useMountOnceOpened(positionSetupOpen);
+  const openingStatsMounted = useMountOnceOpened(openingStatsOpen);
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="relative h-screen overflow-hidden bg-background">
@@ -1561,7 +1609,9 @@ const App = () => {
 
         {activeMode === "daily" ? (
           <div className="min-h-[620px] overflow-hidden bg-background p-2 sm:p-3 lg:col-span-2 lg:min-h-0 lg:p-4">
-            <DailyRoutinePanel onStartTask={handleStartRoutineTask} />
+            <Suspense fallback={<PanelFallback />}>
+              <DailyRoutinePanel onStartTask={handleStartRoutineTask} />
+            </Suspense>
           </div>
         ) : (
           <>
@@ -1616,67 +1666,69 @@ const App = () => {
                   >
                     <PanelRightClose className="h-4 w-4" />
                   </button>
-                  {activeMode === "vision" ? (
-                    <BoardVisionPanel
-                      card={visionCard}
-                      score={visionScore}
-                      attempts={visionAttempts}
-                      streak={visionStreak}
-                      bestStreak={visionBestStreak}
-                      feedback={visionFeedback}
-                      onNext={nextVisionCard}
-                      onReset={resetVisionDrill}
-                    />
-                  ) : activeMode === "database" ? (
-                    <DatabasePanel
-                      onLoadGame={handleLoadGame}
-                      onPreviewPosition={handlePreviewPosition}
-                      onClearPreview={handleClearPreviewLine}
-                    />
-                  ) : activeMode === "training" ? (
-                    <TrainingPanel
-                      initialModule={trainingInitialModule}
-                      onBoardUpdate={handleTrainingBoardUpdate}
-                      onRegisterMoveHandler={handleRegisterMoveHandler}
-                      messages={messages}
-                      onSendMessage={handleSendMessage}
-                      isLoading={isLoading}
-                      onAskAI={handleAskAI}
-                      onLearnWithAI={handleLearnWithAI}
-                      tokenStats={tokenStats}
-                      setMessages={setMessages}
-                    />
-                  ) : activeMode === "tutorials" ? (
-                    <TrainingOpeningTutorialPanel
-                      onBoardUpdate={handleTrainingBoardUpdate}
-                      onRegisterMoveHandler={handleRegisterMoveHandler}
-                      onBack={handleTutorialsBack}
-                    />
-                  ) : (
-                    <ChatPanel
-                      messages={messages}
-                      onSendMessage={handleSendMessage}
-                      isLoading={isLoading}
-                      coachMode={coachMode}
-                      onCoachModeChange={setCoachMode}
-                      isLiveMode={isLiveMode}
-                      onEngineAnalyze={handleEngineAnalyze}
-                      onEngineBestMove={handleEngineBestMove}
-                      onEngineHint={handleEngineHint}
-                      onThinkLikeGM={() => {
-                        setCoachMode("ai");
-                        handleThinkLikeGM(moveHistory.map((m) => m.san));
-                      }}
-                      onAskAI={handleAskAI}
-                      onLearnWithAI={handleLearnWithAI}
-                      tokenStats={tokenStats}
-                      historyPanel={moveHistoryPanel}
-                      onPreviewLine={handlePreviewLine}
-                      onPreviewPosition={handlePreviewPosition}
-                      onClearPreview={handleClearPreviewLine}
-                      onJumpToMove={handleJumpToMove}
-                    />
-                  )}
+                  <Suspense fallback={<PanelFallback />}>
+                    {activeMode === "vision" ? (
+                      <BoardVisionPanel
+                        card={visionCard}
+                        score={visionScore}
+                        attempts={visionAttempts}
+                        streak={visionStreak}
+                        bestStreak={visionBestStreak}
+                        feedback={visionFeedback}
+                        onNext={nextVisionCard}
+                        onReset={resetVisionDrill}
+                      />
+                    ) : activeMode === "database" ? (
+                      <DatabasePanel
+                        onLoadGame={handleLoadGame}
+                        onPreviewPosition={handlePreviewPosition}
+                        onClearPreview={handleClearPreviewLine}
+                      />
+                    ) : activeMode === "training" ? (
+                      <TrainingPanel
+                        initialModule={trainingInitialModule}
+                        onBoardUpdate={handleTrainingBoardUpdate}
+                        onRegisterMoveHandler={handleRegisterMoveHandler}
+                        messages={messages}
+                        onSendMessage={handleSendMessage}
+                        isLoading={isLoading}
+                        onAskAI={handleAskAI}
+                        onLearnWithAI={handleLearnWithAI}
+                        tokenStats={tokenStats}
+                        setMessages={setMessages}
+                      />
+                    ) : activeMode === "tutorials" ? (
+                      <TrainingOpeningTutorialPanel
+                        onBoardUpdate={handleTrainingBoardUpdate}
+                        onRegisterMoveHandler={handleRegisterMoveHandler}
+                        onBack={handleTutorialsBack}
+                      />
+                    ) : (
+                      <ChatPanel
+                        messages={messages}
+                        onSendMessage={handleSendMessage}
+                        isLoading={isLoading}
+                        coachMode={coachMode}
+                        onCoachModeChange={setCoachMode}
+                        isLiveMode={isLiveMode}
+                        onEngineAnalyze={handleEngineAnalyze}
+                        onEngineBestMove={handleEngineBestMove}
+                        onEngineHint={handleEngineHint}
+                        onThinkLikeGM={() => {
+                          setCoachMode("ai");
+                          handleThinkLikeGM(moveHistory.map((m) => m.san));
+                        }}
+                        onAskAI={handleAskAI}
+                        onLearnWithAI={handleLearnWithAI}
+                        tokenStats={tokenStats}
+                        historyPanel={moveHistoryPanel}
+                        onPreviewLine={handlePreviewLine}
+                        onPreviewPosition={handlePreviewPosition}
+                        onClearPreview={handleClearPreviewLine}
+                        onJumpToMove={handleJumpToMove}
+                      />
+                    )}
+                  </Suspense>
                 </>
               )}
             </div>
@@ -1684,45 +1736,55 @@ const App = () => {
         )}
       </div>
 
-      {/* Dialogs & Overlays */}
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {/* Dialogs & Overlays (lazy: downloaded the first time they open) */}
+      <Suspense fallback={null}>
+        {settingsMounted && (
+          <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        )}
 
-      <GameReportDialog
-        open={gameReportOpen}
-        onOpenChange={setGameReportOpen}
-        report={gameReport}
-        moveHistory={moveHistory}
-        onJumpToMove={handleJumpToMove}
-        onReviewBlunders={() => setBlunderReviewOpen(true)}
-      />
+        {gameReportMounted && (
+          <GameReportDialog
+            open={gameReportOpen}
+            onOpenChange={setGameReportOpen}
+            report={gameReport}
+            moveHistory={moveHistory}
+            onJumpToMove={handleJumpToMove}
+            onReviewBlunders={() => setBlunderReviewOpen(true)}
+          />
+        )}
 
-      {blunderReviewOpen && gameReport?.blunders?.length > 0 && (
-        <BlunderReviewMode
-          blunders={gameReport.blunders}
-          onClose={() => setBlunderReviewOpen(false)}
-        />
-      )}
+        {blunderReviewOpen && gameReport?.blunders?.length > 0 && (
+          <BlunderReviewMode
+            blunders={gameReport.blunders}
+            onClose={() => setBlunderReviewOpen(false)}
+          />
+        )}
 
-      <PositionSetupDialog
-        open={positionSetupOpen}
-        onOpenChange={setPositionSetupOpen}
-        onLoadPosition={handleLoadPosition}
-      />
+        {positionSetupMounted && (
+          <PositionSetupDialog
+            open={positionSetupOpen}
+            onOpenChange={setPositionSetupOpen}
+            onLoadPosition={handleLoadPosition}
+          />
+        )}
 
-      {puzzleOpen && <PuzzleMode onClose={() => setPuzzleOpen(false)} />}
-      {openingDrillOpen && (
-        <OpeningDrillMode onClose={() => setOpeningDrillOpen(false)} />
-      )}
-      {endgameOpen && (
-        <EndgameMode
-          onClose={() => setEndgameOpen(false)}
-          onLoadScenario={handleLoadEndgameScenario}
-        />
-      )}
-      <OpeningStatsPanel
-        open={openingStatsOpen}
-        onClose={() => setOpeningStatsOpen(false)}
-      />
+        {puzzleOpen && <PuzzleMode onClose={() => setPuzzleOpen(false)} />}
+        {openingDrillOpen && (
+          <OpeningDrillMode onClose={() => setOpeningDrillOpen(false)} />
+        )}
+        {endgameOpen && (
+          <EndgameMode
+            onClose={() => setEndgameOpen(false)}
+            onLoadScenario={handleLoadEndgameScenario}
+          />
+        )}
+        {openingStatsMounted && (
+          <OpeningStatsPanel
+            open={openingStatsOpen}
+            onClose={() => setOpeningStatsOpen(false)}
+          />
+        )}
+      </Suspense>
       <Toaster richColors closeButton position="bottom-right" />
     </div>
   );

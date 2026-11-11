@@ -1,4 +1,9 @@
-import { GoogleGenAI, createPartFromFunctionResponse } from "@google/genai";
+// The Gemini SDK is loaded on demand so it never weighs on the initial bundle.
+let googleSdkPromise;
+const loadGoogleSdk = () => {
+  googleSdkPromise ??= import("@google/genai");
+  return googleSdkPromise;
+};
 
 // ── System prompt ────────────────────────────────────────────────────────────
 const GM_SYSTEM_PROMPT = `You are a patient, encouraging chess teacher at Grandmaster level working one-on-one with a student.
@@ -94,7 +99,10 @@ const getFunctionCalls = (response) =>
 const asString = (value, fallback = "") =>
   typeof value === "string" ? value : fallback;
 
-const createGoogleClient = (apiKey) => new GoogleGenAI({ apiKey });
+const createGoogleClient = async (apiKey) => {
+  const { GoogleGenAI } = await loadGoogleSdk();
+  return new GoogleGenAI({ apiKey });
+};
 
 const formatSummarySourceMessages = (messages) =>
   messages
@@ -115,7 +123,7 @@ export const summarizeGoogleConversation = async ({
     throw new Error("Please set your Google API key in Settings.");
   }
 
-  const ai = createGoogleClient(apiKey);
+  const ai = await createGoogleClient(apiKey);
   const sourceMessages = formatSummarySourceMessages(messages);
 
   const response = await ai.models.generateContent({
@@ -175,7 +183,7 @@ export const sendGoogleChatMessage = async ({
 }) => {
   if (!apiKey) throw new Error("Please set your Google API key in Settings.");
 
-  const ai = createGoogleClient(apiKey);
+  const ai = await createGoogleClient(apiKey);
 
   const systemInstruction = `${GM_SYSTEM_PROMPT}
 
@@ -186,7 +194,9 @@ If you use a board tool, briefly explain why before or after the action.
 Current board position (FEN): ${fen}
 Student ELO: ~${elo}`;
 
+  const { createPartFromFunctionResponse } = await loadGoogleSdk();
   const config = {
+    systemInstruction,
     tools: [{ functionDeclarations: CHESS_TOOLS }],
   };
 
@@ -197,7 +207,6 @@ Student ELO: ~${elo}`;
   // ── Agentic loop: run until no more function calls ────────────────────────
   let response = await ai.models.generateContent({
     model,
-    systemInstruction,
     contents,
     config,
   });
@@ -273,7 +282,6 @@ Student ELO: ~${elo}`;
 
     response = await ai.models.generateContent({
       model,
-      systemInstruction,
       contents,
       config,
     });

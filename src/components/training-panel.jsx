@@ -30,8 +30,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import ReactMarkdown from "react-markdown";
 
+import AiMarkdown from "@/components/ai-markdown";
 import TrainingPuzzleQuizPanel from "@/components/training-puzzle-quiz-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,77 +112,6 @@ const Badge = ({ label, className }) => (
 );
 
 // ── AI markdown components ─────────────────────────────────────────────────
-const AI_MARKDOWN_COMPONENTS = {
-  h1: ({ children, ...properties }) => (
-    <h1 className="text-base font-semibold" {...properties}>
-      {children}
-    </h1>
-  ),
-  h2: ({ children, ...properties }) => (
-    <h2 className="mt-3 text-sm font-semibold" {...properties}>
-      {children}
-    </h2>
-  ),
-  h3: ({ children, ...properties }) => (
-    <h3
-      className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-      {...properties}
-    >
-      {children}
-    </h3>
-  ),
-  p: ({ children, ...properties }) => (
-    <p className="mb-2 last:mb-0" {...properties}>
-      {children}
-    </p>
-  ),
-  ul: ({ children, ...properties }) => (
-    <ul className="mb-2 list-disc pl-5 space-y-1 last:mb-0" {...properties}>
-      {children}
-    </ul>
-  ),
-  ol: ({ children, ...properties }) => (
-    <ol className="mb-2 list-decimal pl-5 space-y-1 last:mb-0" {...properties}>
-      {children}
-    </ol>
-  ),
-  li: ({ children, ...properties }) => (
-    <li className="leading-relaxed" {...properties}>
-      {children}
-    </li>
-  ),
-  code: ({ inline, className, children, ...properties }) =>
-    inline ? (
-      <code
-        className="rounded bg-black/15 px-1 py-0.5 font-mono text-[0.92em]"
-        {...properties}
-      >
-        {children}
-      </code>
-    ) : (
-      <code
-        className={`block overflow-x-auto rounded-md bg-black/20 p-3 font-mono text-xs ${className || ""}`}
-        {...properties}
-      >
-        {children}
-      </code>
-    ),
-  strong: ({ children, ...properties }) => (
-    <strong className="font-semibold" {...properties}>
-      {children}
-    </strong>
-  ),
-  a: ({ children, ...properties }) => (
-    <a
-      className="text-cyan-300 underline underline-offset-2"
-      rel="noreferrer"
-      target="_blank"
-      {...properties}
-    >
-      {children}
-    </a>
-  ),
-};
 
 // ── Step progress dots ─────────────────────────────────────────────────────
 const StepDots = ({ total, current }) => (
@@ -1867,11 +1796,7 @@ const TrainingAIChat = ({
               }`}
             >
               {message.role === "assistant" ? (
-                <div className="prose prose-invert max-w-none prose-p:my-0 prose-headings:my-0 prose-li:my-0 text-sm">
-                  <ReactMarkdown components={AI_MARKDOWN_COMPONENTS} skipHtml>
-                    {message.content}
-                  </ReactMarkdown>
-                </div>
+                <AiMarkdown>{message.content}</AiMarkdown>
               ) : (
                 message.content
               )}
