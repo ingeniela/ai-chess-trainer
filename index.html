@@ -2,30 +2,49 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI Chess Trainer</title>
-    <!-- Apply saved dark preference immediately to avoid theme flash -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>AI Chess Trainer — Play, analyze and learn with Stockfish</title>
+    <meta
+      name="description"
+      content="Free browser chess trainer: play Elo-calibrated bots, get live Stockfish 18 analysis, AI coaching, tactics quizzes, opening tutorials and game reviews. No sign-up, works offline."
+    />
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <link rel="apple-touch-icon" href="%BASE_URL%apple-touch-icon.png" />
+    <link rel="canonical" href="https://ingeniela.github.io/ai-chess-trainer/" />
+
+    <!-- Social previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="AI Chess Trainer" />
+    <meta
+      property="og:description"
+      content="Play, analyze and train chess in your browser with Stockfish 18 and an AI coach."
+    />
+    <meta property="og:url" content="https://ingeniela.github.io/ai-chess-trainer/" />
+    <meta property="og:image" content="https://ingeniela.github.io/ai-chess-trainer/pwa-512x512.png" />
+    <meta name="twitter:card" content="summary" />
+
+    <!-- Apply saved dark preference immediately to avoid a theme flash -->
     <script>
       (function () {
-        var saved = localStorage.getItem("chess-dark-mode");
-        var dark = saved === "true";
-        if (dark) document.documentElement.classList.add("dark");
+        try {
+          if (localStorage.getItem("chess-dark-mode") === "true") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (error) {
+          /* storage unavailable (private mode) — keep light theme */
+        }
       })();
-    </script>
-    <script>
-      var viteBaseUrl = "%BASE_URL%";
-      if (
-        location.hostname.endsWith("github.io") &&
-        viteBaseUrl.charAt(0) === "%"
-      ) {
-        location.replace("/ai-chess-trainer/site/");
-      }
     </script>
   </head>
   <body>
+    <noscript>
+      AI Chess Trainer needs JavaScript to run the board and the Stockfish engine.
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-
