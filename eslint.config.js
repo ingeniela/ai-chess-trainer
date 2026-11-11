@@ -20,6 +20,8 @@ export default [
       "**/site/**",
       "**/coverage/**",
       "**/node_modules/**",
+      "vite.config.js",
+      "vitest.config.js",
     ],
   },
 
