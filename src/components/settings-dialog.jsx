@@ -1,5 +1,6 @@
-import { Bot, Key, Palette, UserCog, Volume2 } from "lucide-react";
+import { Bot, Key, Palette, ShieldAlert, UserCog, Volume2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,20 +13,38 @@ import {
 import { Input } from "@/components/ui/input";
 import { GEMINI_MODELS } from "@/lib/google-ai";
 
+const API_KEY_STORAGE_KEYS = [
+  "chess-google-api-key",
+  "chess-coach-api-key",
+  "chess-openrouter-api-key",
+];
+
 const OPENAI_MODELS = [
   { id: "gpt-4o-mini", label: "GPT-4o Mini" },
   { id: "gpt-4o", label: "GPT-4o" },
-  { id: "gpt-4-turbo", label: "GPT-4 Turbo" },
-  { id: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
+  { id: "gpt-4.1-mini", label: "GPT-4.1 Mini" },
+  { id: "gpt-4.1", label: "GPT-4.1" },
+  { id: "gpt-5-mini", label: "GPT-5 Mini" },
+  { id: "gpt-5", label: "GPT-5" },
 ];
 
 const OPENROUTER_MODELS = [
   { id: "openai/gpt-4o-mini", label: "OpenAI GPT-4o Mini" },
-  { id: "openai/gpt-4o", label: "OpenAI GPT-4o" },
-  { id: "anthropic/claude-3.5-sonnet", label: "Claude 3.5 Sonnet" },
-  { id: "google/gemini-flash-1.5", label: "Gemini Flash 1.5" },
-  { id: "meta-llama/llama-3.1-70b-instruct", label: "Llama 3.1 70B" },
+  { id: "openai/gpt-4.1-mini", label: "OpenAI GPT-4.1 Mini" },
+  { id: "anthropic/claude-sonnet-4.5", label: "Claude Sonnet 4.5" },
+  { id: "google/gemini-2.5-flash", label: "Gemini 2.5 Flash" },
+  { id: "meta-llama/llama-3.3-70b-instruct", label: "Llama 3.3 70B" },
 ];
+
+/**
+ * Falls back to a default when a saved model id was retired from the list.
+ * @param {{ id: string }[]} models - Selectable models
+ * @param {string | null} stored - Saved model id
+ * @param {string} fallback - Default model id
+ * @returns {string} A model id present in the list
+ */
+const pickKnownModel = (models, stored, fallback) =>
+  models.some((model) => model.id === stored) ? stored : fallback;
 
 const LANGUAGE_OPTIONS = [
   { id: "en", label: "English" },
@@ -86,10 +105,20 @@ const SettingsDialog = ({ open, onOpenChange }) => {
       localStorage.getItem("chess-google-model") || "gemini-2.5-flash",
     );
     setOpenaiApiKey(localStorage.getItem("chess-coach-api-key") || "");
-    setOpenaiModel(localStorage.getItem("chess-coach-model") || "gpt-4o-mini");
+    setOpenaiModel(
+      pickKnownModel(
+        OPENAI_MODELS,
+        localStorage.getItem("chess-coach-model"),
+        "gpt-4o-mini",
+      ),
+    );
     setOpenRouterApiKey(localStorage.getItem("chess-openrouter-api-key") || "");
     setOpenRouterModel(
-      localStorage.getItem("chess-openrouter-model") || "openai/gpt-4o-mini",
+      pickKnownModel(
+        OPENROUTER_MODELS,
+        localStorage.getItem("chess-openrouter-model"),
+        "openai/gpt-4o-mini",
+      ),
     );
     setBoardLight(localStorage.getItem("chess-board-light") || "#edeed1");
     setBoardDark(localStorage.getItem("chess-board-dark") || "#779952");
@@ -135,6 +164,15 @@ const SettingsDialog = ({ open, onOpenChange }) => {
     onOpenChange(false);
   };
 
+  const handleClearKeys = () => {
+    for (const key of API_KEY_STORAGE_KEYS) localStorage.removeItem(key);
+    setGoogleApiKey("");
+    setOpenaiApiKey("");
+    setOpenRouterApiKey("");
+    window.dispatchEvent(new window.Event("chess-settings-updated"));
+    toast.success("Saved API keys removed from this browser.");
+  };
+
   const isGoogle = provider === "google";
   const isOpenAI = provider === "openai";
   const isOpenRouter = provider === "openrouter";
@@ -178,8 +216,11 @@ const SettingsDialog = ({ open, onOpenChange }) => {
           {activeTab === "profile" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Your ELO Rating</label>
+                <label htmlFor="settings-elo" className="text-sm font-medium">
+                  Your ELO Rating
+                </label>
                 <Input
+                  id="settings-elo"
                   type="number"
                   placeholder="1000"
                   min={100}
@@ -193,8 +234,14 @@ const SettingsDialog = ({ open, onOpenChange }) => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Language</label>
+                <label
+                  htmlFor="settings-language"
+                  className="text-sm font-medium"
+                >
+                  Language
+                </label>
                 <select
+                  id="settings-language"
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -212,11 +259,18 @@ const SettingsDialog = ({ open, onOpenChange }) => {
           {activeTab === "ai" && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">AI Provider</label>
-                <div className="grid grid-cols-3 gap-2">
+                <p id="settings-provider" className="text-sm font-medium">
+                  AI Provider
+                </p>
+                <div
+                  className="grid grid-cols-3 gap-2"
+                  role="group"
+                  aria-labelledby="settings-provider"
+                >
                   <button
                     type="button"
                     onClick={() => setProvider("google")}
+                    aria-pressed={isGoogle}
                     className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                       isGoogle
                         ? "border-primary bg-primary text-primary-foreground"
@@ -228,6 +282,7 @@ const SettingsDialog = ({ open, onOpenChange }) => {
                   <button
                     type="button"
                     onClick={() => setProvider("openai")}
+                    aria-pressed={isOpenAI}
                     className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                       isOpenAI
                         ? "border-primary bg-primary text-primary-foreground"
@@ -239,6 +294,7 @@ const SettingsDialog = ({ open, onOpenChange }) => {
                   <button
                     type="button"
                     onClick={() => setProvider("openrouter")}
+                    aria-pressed={isOpenRouter}
                     className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                       isOpenRouter
                         ? "border-primary bg-primary text-primary-foreground"
@@ -250,14 +306,42 @@ const SettingsDialog = ({ open, onOpenChange }) => {
                 </div>
               </div>
 
+              <div className="flex gap-2 rounded-md border border-amber-300/60 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+                <ShieldAlert
+                  className="mt-0.5 h-4 w-4 shrink-0"
+                  aria-hidden="true"
+                />
+                <div className="space-y-1.5">
+                  <p>
+                    Your key is saved only in this browser and sent directly to
+                    the provider you choose — this app has no server. Avoid
+                    saving keys on shared computers, and prefer a key with a
+                    spending limit.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleClearKeys}
+                    className="font-semibold underline underline-offset-2 hover:no-underline"
+                  >
+                    Remove all saved API keys from this browser
+                  </button>
+                </div>
+              </div>
+
               {isGoogle && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label
+                      htmlFor="settings-google-key"
+                      className="text-sm font-medium"
+                    >
                       Google API Key
                     </label>
                     <Input
+                      id="settings-google-key"
                       type="password"
+                      autoComplete="off"
+                      spellCheck={false}
                       placeholder="AIza..."
                       value={googleApiKey}
                       onChange={(e) => setGoogleApiKey(e.target.value)}
@@ -269,8 +353,14 @@ const SettingsDialog = ({ open, onOpenChange }) => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Gemini Model</label>
+                    <label
+                      htmlFor="settings-google-model"
+                      className="text-sm font-medium"
+                    >
+                      Gemini Model
+                    </label>
                     <select
+                      id="settings-google-model"
                       value={googleModel}
                       onChange={(e) => setGoogleModel(e.target.value)}
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -292,11 +382,17 @@ const SettingsDialog = ({ open, onOpenChange }) => {
               {isOpenAI && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label
+                      htmlFor="settings-openai-key"
+                      className="text-sm font-medium"
+                    >
                       OpenAI API Key
                     </label>
                     <Input
+                      id="settings-openai-key"
                       type="password"
+                      autoComplete="off"
+                      spellCheck={false}
                       placeholder="sk-..."
                       value={openaiApiKey}
                       onChange={(e) => setOpenaiApiKey(e.target.value)}
@@ -304,8 +400,14 @@ const SettingsDialog = ({ open, onOpenChange }) => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Model</label>
+                    <label
+                      htmlFor="settings-openai-model"
+                      className="text-sm font-medium"
+                    >
+                      Model
+                    </label>
                     <select
+                      id="settings-openai-model"
                       value={openaiModel}
                       onChange={(e) => setOpenaiModel(e.target.value)}
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -323,11 +425,17 @@ const SettingsDialog = ({ open, onOpenChange }) => {
               {isOpenRouter && (
                 <>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label
+                      htmlFor="settings-openrouter-key"
+                      className="text-sm font-medium"
+                    >
                       OpenRouter API Key
                     </label>
                     <Input
+                      id="settings-openrouter-key"
                       type="password"
+                      autoComplete="off"
+                      spellCheck={false}
                       placeholder="sk-or-v1-..."
                       value={openRouterApiKey}
                       onChange={(e) => setOpenRouterApiKey(e.target.value)}
@@ -339,10 +447,14 @@ const SettingsDialog = ({ open, onOpenChange }) => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">
+                    <label
+                      htmlFor="settings-openrouter-model"
+                      className="text-sm font-medium"
+                    >
                       OpenRouter Model
                     </label>
                     <select
+                      id="settings-openrouter-model"
                       value={openRouterModel}
                       onChange={(e) => setOpenRouterModel(e.target.value)}
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
