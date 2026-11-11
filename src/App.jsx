@@ -26,6 +26,11 @@ import { getBotProfile } from "@/lib/bot-profiles";
 import { migrateMoveHistory } from "@/lib/chess-helpers";
 import { autoSave, loadAutoSave, saveGame } from "@/lib/db";
 import { getBestMove } from "@/lib/engine";
+import {
+  createVisionCard,
+  getGameResult,
+  getPlayerResult,
+} from "@/lib/game-result";
 import { recordOpeningResult, detectOpening } from "@/lib/opening-stats";
 import { OPENINGS } from "@/lib/openings";
 import {
@@ -84,38 +89,12 @@ const useMountOnceOpened = (open) => {
 
 // ── Local helpers ─────────────────────────────────────────────────────────────
 const EMPTY_BOARD_FEN = "8/8/8/8/8/8/8/8 w - - 0 1";
-const BOARD_FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
-const BOARD_RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"];
-
-const createVisionCard = () => {
-  const square = `${BOARD_FILES[Math.floor(Math.random() * 8)]}${
-    BOARD_RANKS[Math.floor(Math.random() * 8)]
-  }`;
-  return {
-    square,
-    type: "coordinate",
-  };
-};
 
 const getApiKey = () => localStorage.getItem("chess-coach-api-key") || "";
 const getTextApiKey = () =>
   localStorage.getItem("chess-ai-provider") === "openrouter"
     ? localStorage.getItem("chess-openrouter-api-key") || ""
     : getApiKey();
-
-const getGameResult = (game) => {
-  if (!game.isGameOver()) return null;
-  if (game.isDraw()) return "draw";
-  if (game.isCheckmate()) return game.turn() === "w" ? "black" : "white";
-  return "draw";
-};
-
-const getPlayerResult = (gameResult, playerColor) => {
-  if (!gameResult) return null;
-  if (gameResult === "draw") return "draw";
-  const playerSide = playerColor === "black" ? "black" : "white";
-  return gameResult === playerSide ? "win" : "loss";
-};
 
 const getStoredBoardColors = () => ({
   light: localStorage.getItem("chess-board-light") || "#edeed1",
