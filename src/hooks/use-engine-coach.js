@@ -382,8 +382,7 @@ const useEngineCoach = ({
                 square: card.fromSquare,
                 background:
                   "radial-gradient(circle, rgba(168, 85, 247, 0.32) 55%, rgba(168, 85, 247, 0.16) 56%)",
-                boxShadow:
-                  "inset 0 0 0 3px rgba(168, 85, 247, 0.48)",
+                boxShadow: "inset 0 0 0 3px rgba(168, 85, 247, 0.48)",
               },
             ]
           : [],

@@ -577,46 +577,47 @@ const BoardPanel = ({
 
       {/* Captured pieces — opponent (top) */}
       {!hideHud && (
-      <div
-        className="w-full flex justify-between items-center px-1"
-        style={{ maxWidth: boardWidth }}
-      >
-        <Dropdown
-          label="Play as"
-          icon={playerColor === "white" ? Crown : CircleUser}
-          options={PLAYER_COLOR_OPTIONS}
-          value={playerColor}
-          onChange={onPlayerColorChange}
-          disabled={isGameInProgress}
-        />
-        <CapturedRow
-          totalPts={
-            boardOrientation === "white" ? capturedPts.w : capturedPts.b
-          }
-          pieces={boardOrientation === "white" ? captured.w : captured.b}
-          adv={
-            boardOrientation === "white"
-              ? advantage < 0
-                ? -advantage
-                : 0
-              : advantage > 0
-                ? advantage
-                : 0
-          }
-        />
-        <div className="flex items-center gap-1">
-          <div
-            className={`h-2.5 w-2.5 rounded-full ${
-              (boardOrientation === "white" ? "b" : "w") === turn && !isGameOver
-                ? "bg-primary animate-pulse"
-                : "bg-muted-foreground/30"
-            }`}
+        <div
+          className="w-full flex justify-between items-center px-1"
+          style={{ maxWidth: boardWidth }}
+        >
+          <Dropdown
+            label="Play as"
+            icon={playerColor === "white" ? Crown : CircleUser}
+            options={PLAYER_COLOR_OPTIONS}
+            value={playerColor}
+            onChange={onPlayerColorChange}
+            disabled={isGameInProgress}
           />
-          <span className="text-xs text-muted-foreground">
-            {boardOrientation === "white" ? "Black" : "White"}
-          </span>
+          <CapturedRow
+            totalPts={
+              boardOrientation === "white" ? capturedPts.w : capturedPts.b
+            }
+            pieces={boardOrientation === "white" ? captured.w : captured.b}
+            adv={
+              boardOrientation === "white"
+                ? advantage < 0
+                  ? -advantage
+                  : 0
+                : advantage > 0
+                  ? advantage
+                  : 0
+            }
+          />
+          <div className="flex items-center gap-1">
+            <div
+              className={`h-2.5 w-2.5 rounded-full ${
+                (boardOrientation === "white" ? "b" : "w") === turn &&
+                !isGameOver
+                  ? "bg-primary animate-pulse"
+                  : "bg-muted-foreground/30"
+              }`}
+            />
+            <span className="text-xs text-muted-foreground">
+              {boardOrientation === "white" ? "Black" : "White"}
+            </span>
+          </div>
         </div>
-      </div>
       )}
 
       {/* Chess Board */}
@@ -691,38 +692,39 @@ const BoardPanel = ({
 
       {/* Captured pieces — player (bottom) */}
       {!hideHud && (
-      <div
-        className="w-full flex justify-between items-center px-1"
-        style={{ maxWidth: boardWidth }}
-      >
-        <CapturedRow
-          totalPts={
-            boardOrientation === "white" ? capturedPts.b : capturedPts.w
-          }
-          pieces={boardOrientation === "white" ? captured.b : captured.w}
-          adv={
-            boardOrientation === "white"
-              ? advantage > 0
-                ? advantage
-                : 0
-              : advantage < 0
-                ? -advantage
-                : 0
-          }
-        />
-        <div className="flex items-center gap-1">
-          <div
-            className={`h-2.5 w-2.5 rounded-full ${
-              (boardOrientation === "white" ? "w" : "b") === turn && !isGameOver
-                ? "bg-primary animate-pulse"
-                : "bg-muted-foreground/30"
-            }`}
+        <div
+          className="w-full flex justify-between items-center px-1"
+          style={{ maxWidth: boardWidth }}
+        >
+          <CapturedRow
+            totalPts={
+              boardOrientation === "white" ? capturedPts.b : capturedPts.w
+            }
+            pieces={boardOrientation === "white" ? captured.b : captured.w}
+            adv={
+              boardOrientation === "white"
+                ? advantage > 0
+                  ? advantage
+                  : 0
+                : advantage < 0
+                  ? -advantage
+                  : 0
+            }
           />
-          <span className="text-xs text-muted-foreground">
-            {boardOrientation === "white" ? "White" : "Black"}
-          </span>
+          <div className="flex items-center gap-1">
+            <div
+              className={`h-2.5 w-2.5 rounded-full ${
+                (boardOrientation === "white" ? "w" : "b") === turn &&
+                !isGameOver
+                  ? "bg-primary animate-pulse"
+                  : "bg-muted-foreground/30"
+              }`}
+            />
+            <span className="text-xs text-muted-foreground">
+              {boardOrientation === "white" ? "White" : "Black"}
+            </span>
+          </div>
         </div>
-      </div>
       )}
     </div>
   );

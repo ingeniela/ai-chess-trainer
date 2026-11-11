@@ -333,7 +333,8 @@ const SettingsDialog = ({ open, onOpenChange }) => {
                       onChange={(e) => setOpenRouterApiKey(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Uses the OpenRouter OpenAI-compatible chat completions API.
+                      Uses the OpenRouter OpenAI-compatible chat completions
+                      API.
                     </p>
                   </div>
 

@@ -31,32 +31,38 @@ const QUALITY_STYLES = {
   Brilliant: {
     border: "border-cyan-500/60",
     bg: "bg-cyan-50 text-cyan-950 dark:bg-cyan-950/50 dark:text-cyan-50",
-    badge: "bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40",
+    badge:
+      "bg-cyan-100 text-cyan-700 border-cyan-300 dark:bg-cyan-500/20 dark:text-cyan-300 dark:border-cyan-500/40",
   },
   Excellent: {
     border: "border-emerald-500/60",
     bg: "bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-50",
-    badge: "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40",
+    badge:
+      "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40",
   },
   Good: {
     border: "border-green-600/50",
     bg: "bg-green-50 text-green-950 dark:bg-green-950/30 dark:text-green-50",
-    badge: "bg-green-100 text-green-700 border-green-300 dark:bg-green-500/20 dark:text-green-300 dark:border-green-500/40",
+    badge:
+      "bg-green-100 text-green-700 border-green-300 dark:bg-green-500/20 dark:text-green-300 dark:border-green-500/40",
   },
   Inaccuracy: {
     border: "border-yellow-500/50",
     bg: "bg-yellow-50 text-yellow-950 dark:bg-yellow-950/30 dark:text-yellow-50",
-    badge: "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-500/20 dark:text-yellow-300 dark:border-yellow-500/40",
+    badge:
+      "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-500/20 dark:text-yellow-300 dark:border-yellow-500/40",
   },
   Mistake: {
     border: "border-orange-500/60",
     bg: "bg-orange-50 text-orange-950 dark:bg-orange-950/40 dark:text-orange-50",
-    badge: "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/40",
+    badge:
+      "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/40",
   },
   Blunder: {
     border: "border-red-500/70",
     bg: "bg-red-50 text-red-950 dark:bg-red-950/50 dark:text-red-50",
-    badge: "bg-red-100 text-red-700 border-red-300 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/40",
+    badge:
+      "bg-red-100 text-red-700 border-red-300 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/40",
   },
 };
 
@@ -207,8 +213,7 @@ const MoveChip = ({ move, idx, onPreview, onClearPreview }) => {
   if (isMate) {
     cls =
       "bg-red-100 text-red-700 border-red-300 dark:bg-red-500/20 dark:text-red-300 dark:border-red-500/30";
-  }
-  else if (isCheck) {
+  } else if (isCheck) {
     cls =
       "bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-500/15 dark:text-yellow-300 dark:border-yellow-500/25";
   } else if (isCapture) {
@@ -217,8 +222,7 @@ const MoveChip = ({ move, idx, onPreview, onClearPreview }) => {
   } else if (isCastle) {
     cls =
       "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/25";
-  }
-  else if (isPromotion) {
+  } else if (isPromotion) {
     cls =
       "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/25";
   }
@@ -456,7 +460,9 @@ const BestMoveCard = ({ card, onPreviewLine, onClearPreview }) => {
       {/* Header */}
       <div className="flex items-center gap-2">
         <Lightbulb className="h-3.5 w-3.5 text-cyan-500 dark:text-cyan-400 shrink-0" />
-        <span className="text-xs font-semibold text-cyan-700 dark:text-cyan-300">Best Move</span>
+        <span className="text-xs font-semibold text-cyan-700 dark:text-cyan-300">
+          Best Move
+        </span>
       </div>
 
       {/* Big move display */}
@@ -556,7 +562,9 @@ const HintCard = ({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Crosshair className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400 shrink-0" />
-          <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">Hint</span>
+          <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+            Hint
+          </span>
         </div>
         {card.evalStr && (
           <div

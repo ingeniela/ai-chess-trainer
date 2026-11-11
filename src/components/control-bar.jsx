@@ -217,7 +217,6 @@ const ControlBar = ({
         onSetTimeControl={onSetTimeControl}
       /> */}
     </div>
-
   </div>
 );
 

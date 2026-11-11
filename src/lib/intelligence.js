@@ -742,7 +742,13 @@ export const buildThreatCard = (
       description: `${pickThreatMessage("hanging", (messageSeed + 1) % 6)} Your ${PIECE_NAMES[main.piece].toLowerCase()} on ${main.square} is undefended and under attack.`,
       severity: hanging[0].value >= 5 ? "high" : "medium",
       previewArrows: lastMoveTo
-        ? [{ startSquare: lastMoveTo, endSquare: main.square, color: "#f97316" }]
+        ? [
+            {
+              startSquare: lastMoveTo,
+              endSquare: main.square,
+              color: "#f97316",
+            },
+          ]
         : [],
     });
   }
@@ -760,8 +766,16 @@ export const buildThreatCard = (
       severity: isAbsolute ? "high" : "medium",
       highlightSquares: [p.pinnedSquare, p.attackerSquare],
       previewArrows: [
-        { startSquare: p.attackerSquare, endSquare: p.pinnedSquare, color: "#f97316" },
-        { startSquare: p.pinnedSquare, endSquare: p.pinnedAgainstSquare, color: "#60a5fa" },
+        {
+          startSquare: p.attackerSquare,
+          endSquare: p.pinnedSquare,
+          color: "#f97316",
+        },
+        {
+          startSquare: p.pinnedSquare,
+          endSquare: p.pinnedAgainstSquare,
+          color: "#60a5fa",
+        },
       ],
     });
   }
@@ -777,8 +791,16 @@ export const buildThreatCard = (
       severity: "high",
       highlightSquares: [s.skeweredSquare, s.attackerSquare],
       previewArrows: [
-        { startSquare: s.attackerSquare, endSquare: s.skeweredSquare, color: "#f97316" },
-        { startSquare: s.skeweredSquare, endSquare: s.collateralSquare, color: "#60a5fa" },
+        {
+          startSquare: s.attackerSquare,
+          endSquare: s.skeweredSquare,
+          color: "#f97316",
+        },
+        {
+          startSquare: s.skeweredSquare,
+          endSquare: s.collateralSquare,
+          color: "#60a5fa",
+        },
       ],
     });
   }
