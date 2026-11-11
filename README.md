@@ -40,6 +40,13 @@ https://github.com/ingeniela/ai-chess-trainer
 
 ## Recent Highlights
 
+- Installable app (PWA): add it to your phone or desktop and keep playing and analyzing offline — Stockfish runs locally.
+- Mobile-first layout: full-width board on phones, one-row mode bar, toolbar that never covers the coach panel.
+- Chess clock is back (bullet to classical, with increments): it starts on the first move and a flag fall ends and saves the game.
+- Set up any position from FEN or PGN and open opening statistics from the toolbar's **More** menu.
+- Faster first load: training, database, tutorials, dialogs and the Gemini SDK are loaded on demand.
+- Gemini coach now actually receives its coaching persona and board context (system instruction fix).
+- Clear notice on how API keys are stored, plus a one-click "remove saved keys" action.
 - End Game action: manually finish an in-progress game, save it, and trigger post-game analysis.
 - Automatic game database: completed, ended, and imported games are stored locally in IndexedDB.
 - PGN import: paste a Chess.com or standard PGN, store it in the database, load it on the board, and analyze it.
@@ -79,6 +86,12 @@ Play against Stockfish-powered Elo bots, a local offline bot, or use manual
 two-player mode. The board supports legal move handling, last-move highlights,
 premove handling, board flipping, PGN copy, undo/redo, review navigation, and
 optional post-game reports.
+
+The toolbar's **More** menu adds:
+
+- Set position from a FEN string or a full PGN.
+- Opening statistics for your recorded games.
+- Chess clock with bullet, blitz, rapid and classical time controls.
 
 Engine tools include:
 
@@ -167,13 +180,22 @@ Game action. Reports include:
 - Blunder and mistake review.
 - Jump-to-position links from the report back to the board.
 
+## Install And Offline Use
+
+The live site is a Progressive Web App. In Chrome, Edge or Safari use
+**Install app** / **Add to Home Screen**. After the first visit the app shell,
+the training content you opened and the Stockfish engine are cached, so play,
+analysis, puzzles and tutorials keep working without a connection. Only the
+optional AI coach needs the network.
+
 ## Local Storage And Privacy
 
 AI Chess Trainer is designed as a client-side application:
 
 - Games are saved in IndexedDB.
 - Daily quest and settings data are saved in local storage.
-- API keys remain in local storage.
+- API keys remain in local storage and are sent only to the provider you pick.
+  Settings → AI has a button to remove every saved key from the browser.
 - No account system or custom backend is required.
 - Stockfish analysis runs locally through the bundled WASM engine.
 
@@ -181,7 +203,7 @@ AI Chess Trainer is designed as a client-side application:
 
 ### Prerequisites
 
-- Node.js 20+ recommended
+- Node.js 20+ (CI uses Node 22)
 - npm
 
 ### Install
@@ -218,9 +240,12 @@ model. `.env` variables are not required for the current app flow.
 | `npm run preview` | Preview the production build |
 | `npm run lint` | Run ESLint |
 | `npm run lint:fix` | Run ESLint with automatic fixes |
-| `npm run test` | Run Vitest |
+| `npm test` | Run the test suite once |
+| `npm run test:watch` | Run Vitest in watch mode |
 | `npm run test:coverage` | Run Vitest with coverage summary |
+| `npm run test:report` | Write an HTML coverage report to `coverage/` |
 | `npm run test:ui` | Open Vitest UI with coverage enabled |
+| `npm run check` | Lint, test and build — the same gate CI runs |
 | `npm run format` | Format source files with Prettier |
 
 ## Production Build
@@ -239,8 +264,9 @@ https://ingeniela.github.io/ai-chess-trainer/
 
 ## GitHub Pages Deployment
 
-The repository includes `.github/workflows/deploy.yml`. It builds and deploys
-`dist` on every push to `main`.
+The repository includes `.github/workflows/deploy.yml`. On every pull request
+it runs lint, tests and a production build. On every push to `main` it runs the
+same checks and, only if they pass, deploys `dist` to GitHub Pages.
 
 To enable it:
 
@@ -261,6 +287,7 @@ To enable it:
 | AI providers | Google Gemini, OpenAI, OpenRouter |
 | State | Zustand, React state |
 | Storage | IndexedDB, local storage |
+| Offline / install | vite-plugin-pwa (Workbox) |
 | Tests | Vitest, Testing Library |
 | Icons | lucide-react |
 
@@ -270,9 +297,10 @@ To enable it:
 src/
   App.jsx                         App shell, mode routing, game orchestration
   components/
+    ai-markdown.jsx               Safe Markdown renderer for coach replies
     board-panel.jsx               Main chessboard
     chat-panel.jsx                Engine and AI coach panel
-    control-bar.jsx               Opponent, bot, new/end game controls
+    control-bar.jsx               Opponent, bot, new/end game, More menu (clock, FEN/PGN, stats)
     daily-routine-panel.jsx       Daily Quest dashboard
     database-panel.jsx            Local game database, PGN import, exports
     game-report-dialog.jsx        Accuracy and move-quality report
@@ -292,6 +320,8 @@ src/
     stockfish.js                  Stockfish WASM wrapper
     engine.js                     Local bot/engine helpers
     analyzer.js                   Game report analysis helpers
+    game-result.js                Game/player result helpers
+    google-ai.js                  Gemini client (lazy-loaded) with board tools
     openings.js                   Opening data
   store/
     use-game-store.js
@@ -310,6 +340,4 @@ insights, UI polish, and tests around game import/export flows.
 
 ## License
 
-MIT License
-
-Copyright (c) Shudipto Trafder
+[MIT](LICENSE) — originally created by Shudipto Trafder, maintained by ingeniela.

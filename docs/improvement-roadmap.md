@@ -6,6 +6,11 @@
 - The right sidebar collapse state is remembered between reloads.
 - Challenge hints and reveals resolve both SAN and UCI solution moves.
 - Castling supports dragging or clicking the king onto the rook when legal.
+- Mobile layout: full-width board, one-row mode bar, toolbar above the board.
+- Performance: lazy-loaded views and dialogs, on-demand Gemini SDK, vendor chunks.
+- Installable offline PWA with the Stockfish engine precached.
+- Chess clock, FEN/PGN position setup and opening stats restored under **More**.
+- CI gate: lint, tests and build must pass before deploying to Pages.
 
 ## Next implementation batches
 
@@ -33,11 +38,10 @@
    - Build guided modules for forks, pins, mates, openings, and endgames.
    - Gate each path with examples, drills, mixed review, and progress badges.
 
-6. **Mobile layout**
-   - Replace the right sidebar with a bottom sheet on narrow screens.
-   - Keep the board as the first-priority viewport element.
-   - Add compact tabs for Engine, Coach, and History.
+6. **Mobile polish**
+   - Bottom sheet for the coach panel on narrow screens.
 
-7. **Performance**
-   - Lazy-load training, challenges, reports, and Stockfish-heavy views.
-   - Split large UI chunks to reduce initial bundle size.
+7. **Code health**
+   - Split `App.jsx`, `training-panel.jsx` and `chat-panel.jsx` into smaller
+     feature modules backed by the existing Zustand stores.
+   - Component tests for the play flow (move, undo, import PGN).
