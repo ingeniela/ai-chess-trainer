@@ -1643,6 +1643,15 @@ const App = () => {
                     premoveReference.current = null;
                   }}
                   boardColors={boardColors}
+                  clock={
+                    clockEnabled && activeMode === "play"
+                      ? {
+                          timeWhite: clock.timeWhite,
+                          timeBlack: clock.timeBlack,
+                          flagged: clock.flagged,
+                        }
+                      : null
+                  }
                 />
               </div>
             </div>

@@ -9,6 +9,8 @@ import {
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import { Chessboard } from "react-chessboard";
 
+import { formatTime } from "@/hooks/use-chess-clock";
+
 import { Dropdown } from "./control-bar";
 
 const PLAYER_COLOR_OPTIONS = [
@@ -171,6 +173,35 @@ const CapturedRow = ({ totalPts, adv, pieces = [] }) => (
 );
 
 /**
+ * Compact countdown shown next to a player's name when the clock is on.
+ * @param {{ clock: { timeWhite: number, timeBlack: number, flagged: string | null } | null, side: "w" | "b", active: boolean }} props - Clock state for one side
+ * @returns {import("react").JSX.Element | null} Clock face
+ */
+const ClockFace = ({ clock, side, active }) => {
+  if (!clock) return null;
+  const ms = side === "w" ? clock.timeWhite : clock.timeBlack;
+  const flagged = clock.flagged === side;
+  const low = ms < 20_000;
+  return (
+    <span
+      role="timer"
+      aria-label={`${side === "w" ? "White" : "Black"} clock`}
+      className={`ml-1 rounded px-1.5 py-0.5 font-mono text-xs font-semibold tabular-nums transition-colors ${
+        flagged
+          ? "bg-destructive text-white"
+          : active
+            ? low
+              ? "bg-red-600 text-white"
+              : "bg-foreground text-background"
+            : "bg-secondary text-muted-foreground"
+      }`}
+    >
+      {flagged ? "TIME" : formatTime(ms)}
+    </span>
+  );
+};
+
+/**
  *
  */
 const BoardPanel = ({
@@ -191,6 +222,7 @@ const BoardPanel = ({
   premove = null,
   onCancelPremove = null,
   boardColors = { light: "#edeed1", dark: "#779952" },
+  clock = null,
 }) => {
   const containerReference = useRef(null);
   const [boardWidth, setBoardWidth] = useState(400);
@@ -622,6 +654,11 @@ const BoardPanel = ({
             <span className="text-xs text-muted-foreground">
               {boardOrientation === "white" ? "Black" : "White"}
             </span>
+            <ClockFace
+              clock={clock}
+              side={boardOrientation === "white" ? "b" : "w"}
+              active={(boardOrientation === "white" ? "b" : "w") === turn}
+            />
           </div>
         </div>
       )}
@@ -729,6 +766,11 @@ const BoardPanel = ({
             <span className="text-xs text-muted-foreground">
               {boardOrientation === "white" ? "White" : "Black"}
             </span>
+            <ClockFace
+              clock={clock}
+              side={boardOrientation === "white" ? "w" : "b"}
+              active={(boardOrientation === "white" ? "w" : "b") === turn}
+            />
           </div>
         </div>
       )}
