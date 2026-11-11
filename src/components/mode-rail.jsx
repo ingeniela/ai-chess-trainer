@@ -55,7 +55,7 @@ const ModeRail = ({
   onToggleDarkMode,
   onToggleCollapsed,
 }) => (
-  <aside className="flex flex-col border-b border-sidebar-border bg-sidebar px-2 py-2 text-sidebar-foreground shadow-sm lg:border-b-0 lg:border-r lg:px-3 lg:py-4">
+  <aside className="flex flex-row items-center gap-1 border-b border-sidebar-border bg-sidebar px-2 py-2 text-sidebar-foreground shadow-sm lg:flex-col lg:items-stretch lg:gap-0 lg:border-b-0 lg:border-r lg:px-3 lg:py-4">
     <div
       className={`mb-4 hidden items-center gap-2 lg:flex ${
         collapsed ? "justify-center" : "justify-between"
@@ -81,7 +81,10 @@ const ModeRail = ({
         )}
       </button>
     </div>
-    <nav className="flex gap-1 overflow-x-auto lg:flex-col lg:gap-1.5 lg:overflow-visible">
+    <nav
+      aria-label="Training modes"
+      className="flex min-w-0 flex-1 gap-0.5 overflow-x-auto lg:flex-none lg:flex-col lg:gap-1.5 lg:overflow-visible"
+    >
       {MODES.map((mode) => {
         const Icon = mode.icon;
         const active = activeMode === mode.id;
@@ -91,7 +94,8 @@ const ModeRail = ({
             type="button"
             onClick={() => onModeChange(mode.id)}
             title={collapsed ? mode.label : undefined}
-            className={`group relative flex h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-md px-3 text-sm font-semibold transition-colors lg:h-11 ${
+            aria-current={active ? "page" : undefined}
+            className={`group relative flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md px-1 py-1 text-[10px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-11 lg:flex-row lg:gap-2 lg:px-3 lg:py-0 lg:text-sm ${
               collapsed ? "lg:px-0" : "lg:justify-start lg:px-2.5"
             } ${
               active
@@ -108,7 +112,9 @@ const ModeRail = ({
             >
               <Icon className="h-4 w-4" />
             </span>
-            <span className={`truncate ${collapsed ? "lg:hidden" : ""}`}>
+            <span
+              className={`max-w-full truncate leading-tight ${collapsed ? "lg:hidden" : ""}`}
+            >
               {mode.label}
             </span>
           </button>
@@ -116,7 +122,7 @@ const ModeRail = ({
       })}
     </nav>
     <div
-      className={`mt-2 flex items-center gap-1 border-t border-sidebar-border/70 pt-2 lg:mt-auto lg:pt-3 ${
+      className={`flex shrink-0 flex-col items-center gap-0.5 border-l border-sidebar-border/70 pl-1 lg:mt-auto lg:flex-row lg:gap-1 lg:border-l-0 lg:border-t lg:pl-0 lg:pt-3 ${
         collapsed ? "lg:flex-col" : "lg:justify-between"
       }`}
     >
@@ -127,12 +133,15 @@ const ModeRail = ({
       >
         Options
       </span>
-      <div className="flex items-center gap-1">
+      <div className="flex flex-col items-center gap-0.5 lg:flex-row lg:gap-1">
         <button
           type="button"
           onClick={onToggleDarkMode}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-9 lg:w-9"
           title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+          aria-label={
+            isDarkMode ? "Switch to light mode" : "Switch to dark mode"
+          }
         >
           {isDarkMode ? (
             <Sun className="h-4 w-4" />
@@ -143,8 +152,9 @@ const ModeRail = ({
         <button
           type="button"
           onClick={onOpenSettings}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:h-9 lg:w-9"
           title="Settings"
+          aria-label="Settings"
         >
           <Settings className="h-4 w-4" />
         </button>

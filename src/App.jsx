@@ -10,6 +10,7 @@ import {
   useEffect,
   useMemo,
 } from "react";
+import { toast } from "sonner";
 
 import BoardPanel, { playSound } from "@/components/board-panel";
 import ChatPanel from "@/components/chat-panel";
@@ -404,11 +405,12 @@ const App = () => {
 
   // ── Chess clock hook ─────────────────────────────────────────────────────
   const clock = useChessClock({
-    enabled: clockEnabled,
+    // The clock only starts once the first move is on the board.
+    enabled: clockEnabled && moveHistory.length > 0,
     timeControlMs: clockTimeControl?.time ?? 180_000,
     incrementMs: clockTimeControl?.inc ?? 2000,
     currentTurn: gameReference.current.turn(),
-    isGameOver: gameReference.current.isGameOver(),
+    isGameOver: gameReference.current.isGameOver() || manualGameEnded,
     isReviewMode: viewIndex !== null,
   });
   const clockReference = useRef(clock);
@@ -1270,45 +1272,68 @@ const App = () => {
     }
   }, [opponent, triggerAIMove, isAnalyzingRef]);
 
-  const handleEndGame = useCallback(() => {
-    if (moveHistory.length === 0 || gameReference.current.isGameOver()) return;
+  const handleEndGame = useCallback(
+    ({ winner = null, reason = "manual" } = {}) => {
+      if (moveHistory.length === 0 || gameReference.current.isGameOver()) {
+        return;
+      }
 
-    clearTimeout(aiTimeoutReference.current);
-    setIsAIThinking(false);
-    setManualGameEnded(true);
-    setIsLiveMode(false);
+      clearTimeout(aiTimeoutReference.current);
+      setIsAIThinking(false);
+      setManualGameEnded(true);
+      setIsLiveMode(false);
 
-    const game = gameReference.current;
-    const pgn = game.pgn();
-    completedGameSaveReference.current = `manual:${pgn}`;
-    saveGame({
-      fen: game.fen(),
-      pgn,
+      const game = gameReference.current;
+      const pgn = game.pgn();
+      const isTimeout = reason === "timeout" && winner;
+      completedGameSaveReference.current = `${reason}:${pgn}`;
+      saveGame({
+        fen: game.fen(),
+        pgn,
+        moveHistory,
+        opponent,
+        difficulty,
+        boardOrientation,
+        playerColor,
+        gameResult: isTimeout ? winner : "ended",
+        playerResult: isTimeout ? getPlayerResult(winner, playerColor) : null,
+        name: `${isTimeout ? "Timeout" : "Ended"} · ${moveHistory.length} moves · ${new Date().toLocaleDateString()}`,
+        completedAt: Date.now(),
+        isManualEnd: true,
+        isAutomaticRecord: true,
+      }).catch((error) => {
+        completedGameSaveReference.current = null;
+        console.error("Failed to save ended game:", error);
+      });
+
+      triggerPostGameAnalysis(moveHistory);
+    },
+    [
+      boardOrientation,
+      difficulty,
       moveHistory,
       opponent,
-      difficulty,
-      boardOrientation,
       playerColor,
-      gameResult: "ended",
-      playerResult: null,
-      name: `Ended · ${moveHistory.length} moves · ${new Date().toLocaleDateString()}`,
-      completedAt: Date.now(),
-      isManualEnd: true,
-      isAutomaticRecord: true,
-    }).catch((error) => {
-      completedGameSaveReference.current = null;
-      console.error("Failed to save ended game:", error);
-    });
+      triggerPostGameAnalysis,
+    ],
+  );
 
-    triggerPostGameAnalysis(moveHistory);
-  }, [
-    boardOrientation,
-    difficulty,
-    moveHistory,
-    opponent,
-    playerColor,
-    triggerPostGameAnalysis,
-  ]);
+  // ── Chess clock: flag fall ends the game ────────────────────────────────
+  useEffect(() => {
+    if (!clock.flagged || manualGameEnded) return;
+    const winner = clock.flagged === "w" ? "black" : "white";
+    toast.info(
+      `${clock.flagged === "w" ? "White" : "Black"} ran out of time — ${winner} wins.`,
+    );
+    handleEndGame({ winner, reason: "timeout" });
+  }, [clock.flagged, handleEndGame, manualGameEnded]);
+
+  // Changing the time control before the first move resets both clocks.
+  const { reset: resetClock } = clock;
+  const hasMovesOnBoard = moveHistory.length > 0;
+  useEffect(() => {
+    if (!hasMovesOnBoard) resetClock(clockTimeControl?.time);
+  }, [clockEnabled, clockTimeControl, hasMovesOnBoard, resetClock]);
 
   // ── Load position from FEN/PGN ───────────────────────────────────────────
   const handleLoadPosition = useCallback(
@@ -1562,35 +1587,9 @@ const App = () => {
 
   // ── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="relative h-screen overflow-hidden bg-background">
-      {activeMode === "play" && (
-        <ControlBar
-          onNewGame={handleNewGame}
-          onEndGame={handleEndGame}
-          canEndGame={
-            moveHistory.length > 0 &&
-            !gameReference.current.isGameOver() &&
-            !manualGameEnded
-          }
-          opponent={opponent}
-          onOpponentChange={setOpponent}
-          difficulty={difficulty}
-          onDifficultyChange={setDifficulty}
-          isGameInProgress={moveHistory.length > 0}
-          onSetPosition={() => setPositionSetupOpen(true)}
-          onOpenPuzzles={() => setPuzzleOpen(true)}
-          onOpenOpeningDrill={() => setOpeningDrillOpen(true)}
-          onOpenEndgame={() => setEndgameOpen(true)}
-          onOpenOpeningStats={() => setOpeningStatsOpen(true)}
-          clockEnabled={clockEnabled}
-          clockTimeControl={clockTimeControl}
-          onToggleClock={() => setClockEnabled((enabled) => !enabled)}
-          onSetTimeControl={setClockTimeControl}
-        />
-      )}
-
+    <div className="relative flex h-dvh flex-col overflow-hidden bg-background">
       <div
-        className="grid h-full grid-cols-1 grid-rows-[auto_auto_620px] overflow-y-auto lg:grid-cols-[var(--app-grid-columns)] lg:grid-rows-none lg:overflow-hidden"
+        className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_auto_minmax(560px,auto)] overflow-y-auto lg:h-full lg:grid-cols-[var(--app-grid-columns)] lg:grid-rows-none lg:overflow-hidden"
         style={{
           "--app-grid-columns": modeRailCollapsed
             ? `56px minmax(0,1fr) ${rightSidebarCollapsed ? "48px" : "440px"}`
@@ -1615,33 +1614,58 @@ const App = () => {
           </div>
         ) : (
           <>
-            <div className="flex min-h-[360px] items-center justify-center overflow-hidden bg-background p-2 sm:min-h-[520px] sm:p-3 lg:min-h-0 lg:p-4">
-              <BoardPanel
-                game={displayBoardGame}
-                onMove={handleMove}
-                lastMoveSquares={displayBoardLastMove}
-                isAIThinking={isAIThinking && !trainingBoard.isTrainingActive}
-                boardOrientation={displayBoardOrientation}
-                isReviewMode={
-                  effectiveViewIndex !== null && !trainingBoard.isTrainingActive
-                }
-                arrows={displayBoardArrows}
-                previewSquares={displayPreviewSquares}
-                onSquareSelect={
-                  activeMode === "vision" ? handleVisionSquareSelect : null
-                }
-                hideHud={activeMode === "vision"}
-                hideStatus={activeMode === "vision"}
-                premove={premove}
-                playerColor={playerColor}
-                onPlayerColorChange={handlePlayerColorChange}
-                isGameInProgress={moveHistory.length > 0}
-                onCancelPremove={() => {
-                  setPremove(null);
-                  premoveReference.current = null;
-                }}
-                boardColors={boardColors}
-              />
+            <div className="flex flex-col bg-background px-1 py-2 sm:p-3 lg:min-h-0 lg:overflow-hidden lg:p-4">
+              {activeMode === "play" && (
+                <ControlBar
+                  onNewGame={handleNewGame}
+                  onEndGame={() => handleEndGame()}
+                  canEndGame={
+                    moveHistory.length > 0 &&
+                    !gameReference.current.isGameOver() &&
+                    !manualGameEnded
+                  }
+                  opponent={opponent}
+                  onOpponentChange={setOpponent}
+                  difficulty={difficulty}
+                  onDifficultyChange={setDifficulty}
+                  isGameInProgress={moveHistory.length > 0}
+                  onSetPosition={() => setPositionSetupOpen(true)}
+                  onOpenOpeningStats={() => setOpeningStatsOpen(true)}
+                  clockEnabled={clockEnabled}
+                  clockTimeControl={clockTimeControl}
+                  onToggleClock={() => setClockEnabled((enabled) => !enabled)}
+                  onSetTimeControl={setClockTimeControl}
+                />
+              )}
+              <div className="flex min-h-0 flex-1 items-center justify-center">
+                <BoardPanel
+                  game={displayBoardGame}
+                  onMove={handleMove}
+                  lastMoveSquares={displayBoardLastMove}
+                  isAIThinking={isAIThinking && !trainingBoard.isTrainingActive}
+                  boardOrientation={displayBoardOrientation}
+                  isReviewMode={
+                    effectiveViewIndex !== null &&
+                    !trainingBoard.isTrainingActive
+                  }
+                  arrows={displayBoardArrows}
+                  previewSquares={displayPreviewSquares}
+                  onSquareSelect={
+                    activeMode === "vision" ? handleVisionSquareSelect : null
+                  }
+                  hideHud={activeMode === "vision"}
+                  hideStatus={activeMode === "vision"}
+                  premove={premove}
+                  playerColor={playerColor}
+                  onPlayerColorChange={handlePlayerColorChange}
+                  isGameInProgress={moveHistory.length > 0}
+                  onCancelPremove={() => {
+                    setPremove(null);
+                    premoveReference.current = null;
+                  }}
+                  boardColors={boardColors}
+                />
+              </div>
             </div>
 
             <div className="relative min-h-0 min-w-0 border-t border-border bg-card lg:border-l lg:border-t-0">

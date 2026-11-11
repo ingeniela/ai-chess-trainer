@@ -25,6 +25,7 @@ import { useState, useRef, useEffect, createElement } from "react";
 import AiMarkdown from "@/components/ai-markdown";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { scrollIntoViewWithin } from "@/lib/utils";
 
 // ── Quality colour map ────────────────────────────────────────────────────
 const QUALITY_STYLES = {
@@ -1310,7 +1311,7 @@ const ChatPanel = ({
   };
 
   useEffect(() => {
-    messagesEndReference.current?.scrollIntoView({ behavior: "smooth" });
+    scrollIntoViewWithin(messagesEndReference.current);
   }, [messages, activeTab]);
 
   /**

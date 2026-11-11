@@ -40,6 +40,7 @@ import { getPuzzleSession, PUZZLES } from "@/data/puzzles";
 import { compareByDifficulty } from "@/lib/difficulty-order";
 import { OPENINGS } from "@/lib/openings";
 import { TYPE_PUZZLE, TYPE_OPENING } from "@/lib/progress";
+import { scrollIntoViewWithin } from "@/lib/utils";
 import useProgressStore from "@/store/use-progress-store";
 
 // ── Theme guidance messages ───────────────────────────────────────────────
@@ -1739,7 +1740,7 @@ const TrainingAIChat = ({
   const messagesEndReference = useRef(null);
 
   useEffect(() => {
-    messagesEndReference.current?.scrollIntoView({ behavior: "smooth" });
+    scrollIntoViewWithin(messagesEndReference.current);
   }, [messages]);
 
   const handleSend = () => {

@@ -201,26 +201,32 @@ const BoardPanel = ({
   const [invalidSquare, setInvalidSquare] = useState(null);
 
   // ── Resize board ──
+  // Desktop: fit inside the panel. Small screens scroll vertically, so the
+  // board takes the full width (capped so the HUD stays in view).
   useEffect(() => {
-    /**
-     *
-     */
+    const container = containerReference.current;
+    if (!container) return undefined;
+
     const updateSize = () => {
-      if (containerReference.current) {
-        const { width, height } =
-          containerReference.current.getBoundingClientRect();
-        const horizontalPadding = width < 520 ? 16 : 48;
-        const verticalReserve = width < 520 ? 96 : 120;
-        const maxSize = Math.min(
-          width - horizontalPadding,
-          height - verticalReserve,
-        );
-        setBoardWidth(Math.max(260, Math.floor(maxSize)));
-      }
+      const { width, height } = container.getBoundingClientRect();
+      const isStacked = window.innerWidth < 1024;
+      const horizontalPadding = width < 520 ? 8 : 48;
+      const verticalReserve = width < 520 ? 96 : 120;
+      const heightLimit = isStacked
+        ? window.innerHeight - 150
+        : height - verticalReserve;
+      const maxSize = Math.min(width - horizontalPadding, heightLimit);
+      setBoardWidth(Math.max(260, Math.floor(maxSize)));
     };
+
     updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(container);
     window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateSize);
+    };
   }, []);
 
   // ── Clear shake animation after it plays ──

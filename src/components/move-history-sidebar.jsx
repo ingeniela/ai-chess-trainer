@@ -17,6 +17,7 @@ import { useRef, useEffect, useMemo, useState, Fragment } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/hooks/use-chess-clock";
+import { scrollIntoViewWithin } from "@/lib/utils";
 
 const qualityVariantMap = {
   excellent: "excellent",
@@ -202,17 +203,14 @@ const MoveHistorySidebar = ({
   // Auto-scroll to bottom when new moves arrive (live mode)
   useEffect(() => {
     if (!isReviewMode) {
-      endReference.current?.scrollIntoView({ behavior: "smooth" });
+      scrollIntoViewWithin(endReference.current);
     }
   }, [moveHistory, isReviewMode]);
 
   // Scroll active (reviewed) move into view
   useEffect(() => {
     if (isReviewMode && activeRowReference.current) {
-      activeRowReference.current.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-      });
+      scrollIntoViewWithin(activeRowReference.current, { align: "nearest" });
     }
   }, [viewIndex, isReviewMode]);
 

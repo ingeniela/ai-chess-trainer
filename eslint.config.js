@@ -61,6 +61,11 @@ export default [
         webkitAudioContext: "readonly",
         Worker: "readonly",
         indexedDB: "readonly",
+        ResizeObserver: "readonly",
+        requestAnimationFrame: "readonly",
+        cancelAnimationFrame: "readonly",
+        matchMedia: "readonly",
+        Blob: "readonly",
       },
     },
 
