@@ -24,5 +24,6 @@ describe("getBestMove (local bot)", () => {
     // Black queen hangs on d4; White knight on f3 can take it.
     const fen = "rnb1kbnr/pppp1ppp/8/4p3/3q4/5N2/PPPPPPPP/RNBQKB1R w KQkq - 0 3";
     expect(getBestMove(fen, "master")).toBe("Nxd4");
-  });
+    // The "master" search is CPU-bound: give slower machines room instead of the default 5 s.
+  }, 20_000);
 });
